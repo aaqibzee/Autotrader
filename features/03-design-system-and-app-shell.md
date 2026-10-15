@@ -1,0 +1,194 @@
+# Feature 03 — Design System & App Shell
+
+**Status:** Not Started
+**Priority:** Must-Have
+**Milestone:** M1 Foundation
+**Effort:** 6h optimistic / 13h realistic / 20h pessimistic
+*(raised from 5/10/16h after a scale review: the public-HTML caching rule, the shared
+API-error/form plumbing, branded error pages and automated a11y/visual checks are
+built once here instead of per feature. See "Scale review" at the end.)*
+**Depends on:** 01
+
+## Description
+
+The visual language and page chrome for both surfaces: the **public consumer site**
+and the **dealer portal**. Report §4 notes "this site has a high design bar; getting
+'looks legit' takes real iteration even with AI." Building the components once,
+before any feature page, stops every later feature from inventing its own buttons,
+spacing, error handling and loading behaviour. Report §5 says car-shopping traffic
+"skews heavily mobile," so everything is designed at 375px first.
+
+---
+
+## Scope
+
+### 1. Tokens (Tailwind theme + CSS variables)
+- Colour: neutral ink/surface scale, one brand accent, semantic success/warning/danger/info, and price-indicator colours (great/good/fair/high/no-rating, reused in Feature 12). Every pairing used for text meets WCAG 2.2 AA (4.5:1 body, 3:1 large text and UI boundaries), checked by a token contrast test.
+- Type scale using a self-hosted font via `next/font` (Feature 01 §13), with `font-variant-numeric: tabular-nums` for prices and mileage
+- Spacing, radius, shadow and z-index scales (z-index named: `header`, `sheet`, `modal`, `toast`), so overlays never fight
+- Breakpoints: Tailwind defaults (`sm` 640, `md` 768, `lg` 1024, `xl` 1280). The filter sheet becomes a sidebar at `lg`.
+- Light theme only for the MVP
+
+### 2. Components (`web/components/ui/`)
+- Button, IconButton, Input, Select, Combobox (searchable, for make/model), RangeSlider (price, mileage), Checkbox, RadioGroup, Toggle
+- Card, Badge (incl. "Example listing", "Reserved", "Sold"), Tag
+- Modal/Sheet (bottom sheet on mobile, used for filters), Tabs, Accordion
+- Toast (one global provider, no ad-hoc inline success text)
+- Skeleton loaders for listing cards and the detail page
+- EmptyState and ErrorState (§4), Pagination, Breadcrumbs
+- `ListingCard`: the most-reused composite (image, title, variant, price, year · mileage · fuel · transmission, location/distance, save heart, optional price-indicator slot). The heart is a client island (§6).
+- **Interactive primitives are built on React Aria Components** (combobox, slider, dialog/sheet, tabs, toast region), styled with Tailwind. Hand-rolled comboboxes and sliders are the most common source of keyboard and screen-reader bugs. Bundle cost is checked by the §7 budget; if it fails, the fallback is importing per-component entry points.
+
+### 3. API errors, forms and request states (shared plumbing)
+Every later form (dealer sign-up, listing edit, contact dealer, saved search, value my
+car) uses these, so error handling is identical everywhere:
+- **`useApiForm(schema, submit)`**: client-side validation (zod, mirroring the generated OpenAPI types, Feature 01 §5), a submit lock against double-submission, and mapping of a 422 Problem's `errors[]` onto fields by `field`. Unknown fields become a form-level error. Sends an `Idempotency-Key` (UUID generated when the form opens) for the endpoints Feature 01 §5 lists.
+- **Problem `code` → UI** (one table, `web/lib/api/problem-ui.ts`):
+
+  | Problem | UI |
+  |---|---|
+  | 409 `stale_update` | `ConflictDialog`: shows what changed, offers "Reload theirs" or "Re-apply mine" (re-submits with the new `updated_at`) |
+  | 429 `rate_limited` | Inline message with the `Retry-After` countdown, never a toast storm |
+  | 503 `integration_unavailable` | The feature's "unavailable — continue manually" variant of `ErrorState` |
+  | 401 | Redirect to sign-in with a same-origin `next` path (only relative paths accepted; no open redirect) |
+  | 403 / 404 | `PermissionDenied` / `NotFound` states |
+  | 5xx / network | `ErrorState` with retry and the `request_id` shown small, for support |
+- **Client request timeout 10 s** (AbortController). After that the UI shows the error state with retry. **No spinner ever runs without a bound.**
+- **Offline:** a banner driven by `navigator.onLine` plus fetch failures. Forms keep their entered values when a submit fails.
+
+### 4. States and branded error pages
+- `EmptyState` (illustration + message + primary action), `ErrorState` (variants: generic, unavailable, offline), `PermissionDenied`, `NotFound`
+- **Branded `not-found.tsx` (404), a `Gone` page (410, with a slot for similar cars used by Features 08/13), `error.tsx` (500, with retry and `request_id`) and `global-error.tsx`.** *(Moved here from Feature 15, which now audits them.)*
+- The static maintenance page served by the proxy (Feature 01 §16) is exported from the same styles at build time (`web/public/maintenance.html`), so it matches the brand without any runtime.
+- **Error responses are never cacheable:** 404/410/5xx pages send `Cache-Control: no-store` (410 may send `public, max-age=3600` because it's deliberate and stable). A transient 500 must never be stored by Cloudflare and served for 60 s.
+
+### 5. Layouts
+- `PublicLayout`: header (logo, search entry, "Value my car" — hidden while Feature 12's flag is off — sign in/account, "For dealers" link), footer (legal links, sitemap links by make). Skip-to-content link.
+- `DealerLayout`: side nav on desktop, bottom nav on mobile (Stock, Leads, Team, Settings), dealer name and approval-status banner ("Awaiting approval: you can create drafts but not publish")
+- `AdminLayout`: minimal, for Feature 14
+
+### 6. Caching and personalisation rule (public pages)
+Public pages are edge-cached (`s-maxage=60, stale-while-revalidate=300`, Features 08
+and 13). Any personal data in that HTML would be served to the next visitor. So:
+- **Public-route HTML is identical for every visitor.** Server components on public routes call the API through `apiPublic`, which **never forwards the session cookie** (Feature 01 §3 forwarding is for authenticated routes only). A lint rule fails CI if a file under `web/app/(public)/` imports the cookie-forwarding client.
+- User-specific bits are **client islands**: the header account slot (from `GET /users/me`), save hearts (Feature 09's id set), "Price dropped since you saved". Each island reserves its space so it causes no layout shift.
+- Authenticated layouts (`/dealer`, `/account`, `/admin`) respond with `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`.
+
+### 7. Rendering and bundle budget
+- Server components by default; `'use client'` only on interactive leaves (forms, sheet, gallery, islands)
+- **No runtime CSS-in-JS.** Tailwind only, so styles work under Feature 01 §11's nonce-based CSP without `unsafe-inline`.
+- **First-load JS budget for the public shell: ≤ 90 KB gzipped**, checked in CI from the `next build` output. It leaves room inside Feature 13's 150 KB detail-page budget.
+- Images: plain `<img srcset>` against the pre-sized variants from Feature 06. **Next.js image optimisation is disabled** (`images.unoptimized`): it would re-encode photos on the shared VM's CPU, which Feature 06 already did once.
+
+### 8. Accessibility baseline
+- WCAG 2.2 AA: contrast (§1), visible focus rings (`:focus-visible`, 3:1), keyboard-operable comboboxes and sliders, focus trapped in sheets and returned to the trigger on close, `aria-live` on toasts (polite; errors assertive) and result counts
+- Target size: ≥ 24×24 px for every control (WCAG 2.2 SC 2.5.8), ≥ 44×44 px for primary mobile actions (save, contact, call, filter)
+- `prefers-reduced-motion` disables sheet, gallery and skeleton shimmer animations
+- Form fields always have visible labels. Errors are linked with `aria-describedby`.
+
+### 9. Component gallery and automated checks
+- **`/dev/components`** (dev and staging builds only, 404 in production) renders every component in every state: default, hover/focus, disabled, loading, error, empty, long content
+- **Playwright screenshot tests** of the gallery at 375 and 1280 px, plus `ListingCard` at 320/375/768/1280. Baselines are committed; a diff fails CI. Uses the fixture `page` (Feature 01 §14 context-leak rule).
+- **axe-core** runs on the gallery and the shell pages in the e2e job, failing on serious/critical violations
+- Vitest + Testing Library for `useApiForm` and the problem→UI table
+
+### 10. Copy and locale
+- en-GB only. All money, mileage, dates and distances go through Feature 01 §13's `lib/format`. No component formats them itself.
+- Strings live in components (no i18n framework), but user-facing copy for errors is centralised in `problem-ui.ts` so it can be reviewed in one place.
+
+---
+
+## Key Decisions
+
+**Mobile-first is enforced, not aspirational.** Every component is reviewed at 375px
+before desktop. The filter panel is a full-screen sheet on mobile and a sidebar from
+`lg:` upward.
+
+**One component library for both surfaces.** The dealer portal looks visually
+distinct only through layout and nav. Sharing components halves the polish work.
+
+**Public HTML is never personalised.** Rejected: per-user SSR with a Cloudflare
+cache-bypass-on-cookie rule. That needs a paid-plan feature or careful Cache Rules,
+and a single misconfiguration serves one user's account menu to everyone. Rendering
+public HTML identically and hydrating personal islands client-side makes the leak
+structurally impossible, and keeps the cache hit rate high.
+
+**Problem codes map to UI in one table.** Rejected: each feature handling 409/429/503
+itself. Feature 05's merge prompt, Feature 10's rate-limit message and Feature 12's
+"valuation unavailable" would otherwise be built three different ways, and at least
+one would end in a raw error or an endless spinner.
+
+**A headless a11y library for complex widgets.** Comboboxes, sliders and dialogs are
+where hand-built components fail keyboard and screen-reader users. React Aria
+Components gives tested behaviour; Tailwind keeps the look ours.
+
+**No Next.js image optimisation.** The images are already resized once into WebP
+variants (Feature 06) and served from Cloudflare. Re-optimising on request would burn
+the shared VM's CPU for no gain.
+
+**A `/dev/components` gallery page plus screenshot tests**, instead of Storybook. It's
+the cheapest way to catch visual regressions without a separate toolchain.
+
+## Acceptance Criteria
+
+**Components & gallery**
+- `/dev/components` renders every component in default, hover/focus, disabled, loading, error and empty states, and returns 404 in a production build
+- `ListingCard` renders correctly at 320, 375, 768 and 1280px with a long title, a missing image and a 7-digit price (screenshot tests)
+- Gallery screenshot tests at 375 and 1280px run in CI and fail on an unapproved visual diff
+- Every text/background token pairing meets AA contrast (token test)
+
+**Errors, forms & states**
+- A 422 Problem with `errors[]` puts each message on its field; an error for an unknown field shows as a form-level error
+- Double-clicking submit sends one request; the same `Idempotency-Key` is reused if the user retries after a network error
+- A 409 `stale_update` opens `ConflictDialog`; "Re-apply mine" re-submits with the new token and succeeds
+- A 429 shows the `Retry-After` countdown; a 503 `integration_unavailable` shows the "continue manually" variant; a request hanging past 10 s shows the error state with retry
+- A `next=https://evil.example` sign-in redirect is ignored and lands on the home page
+- 404, 410 and 500 pages are branded, and the 404 and 500 responses carry `Cache-Control: no-store`
+- The exported maintenance page renders with no JavaScript and no external requests
+
+**Caching & performance**
+- A public page fetched with and without a session cookie returns identical HTML apart from the CSP nonce
+- A file under `web/app/(public)/` importing the cookie-forwarding API client fails CI
+- `/dealer`, `/account` and `/admin` responses carry `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`
+- The public shell's first-load JS is ≤ 90 KB gzipped (CI size check)
+- No CSP violation is logged on any shell page under Feature 01 §11's policy
+- The header's signed-in/out slot causes CLS < 0.01
+
+**Accessibility**
+- Keyboard-only: you can tab through the header, open the filter sheet, operate the price slider and close the sheet, with focus returning to the trigger
+- axe-core reports zero serious or critical violations on the gallery and shell pages; Lighthouse accessibility is 95 or higher
+- No page horizontally scrolls at 320px, and primary mobile actions are at least 44×44 px
+- With `prefers-reduced-motion: reduce`, the sheet opens without animation
+
+---
+
+## Scale review — what was added, and what was deliberately deferred
+
+**Added (P0/P1), with their sections:**
+- P0: public HTML identical for every visitor, cookie-free public API client, personal data only in client islands (§6)
+- P0: shared `useApiForm` plus a single Problem-code → UI table (409/429/503/401/403/404/5xx), bounded request timeouts, no unbounded spinners (§3)
+- P0: first-load JS budget for the shell, enforced in CI (§7)
+- P1: error responses never cacheable (§4)
+- P1: branded 404/410/500/global-error pages and a matching static maintenance page (§4)
+- P1: React Aria primitives for complex widgets (§2)
+- P1: CSP-compatible styling (no runtime CSS-in-JS) and no Next image optimisation (§7)
+- P1: WCAG 2.2 target sizes, reduced motion and focus management (§8)
+- P1: screenshot tests and axe-core in CI (§9)
+- P1: open-redirect-safe `next` handling (§3)
+- P1: offline banner (§3)
+- P1: contrast-checked tokens (§1)
+
+**Ownership moves:** branded 404/410/500 pages and the global error boundary move here
+from Feature 15, which now audits them as part of its states pass.
+
+**Deferred (P2):**
+| Item | Trigger to revisit |
+|---|---|
+| Dark theme | Analytics show > 30% of sessions with `prefers-color-scheme: dark` and a design review agrees |
+| i18n framework (externalised strings) | A non-English market or Welsh-language requirement is in scope |
+| PWA / service worker / offline caching | Native apps are deprioritised and repeat-visit mobile usage justifies it |
+| Storybook | More than one person working on UI components at once |
+| Hosted visual-regression service (Chromatic/Percy) | Screenshot baselines in the repo become a merge-conflict bottleneck |
+
+**Scale traps to avoid:** a separate design system per surface (consumer vs dealer);
+per-user SSR on cached public pages.
