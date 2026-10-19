@@ -1,9 +1,9 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Not Started
+**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A8) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
-**Effort:** 6h optimistic / 13h realistic / 20h pessimistic
+**Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)
 *(raised from 5/10/16h after a scale review: the listing visibility model, system-owned
 column writes, a minimal `Dealer` table and a production-safe, deterministic seed are
 decided here because features 05, 07, 08, 11, 13 and 14 all read them. See "Scale
@@ -32,7 +32,7 @@ against real volume rather than an empty table.
 | `MakeAlias` / `ModelAlias` | `alias` (normalised upper-case), `make_id` / `model_id` | Maps external strings ("VW", "VOLKSWAGEN", "MERCEDES-BENZ") onto our taxonomy. Used by Feature 05's plate lookup and any later import. |
 
 - Source of truth: hand-curated CSVs in `backend/data/taxonomy/` (`makes.csv`, `models.csv`, `aliases.csv`), reviewed in PRs. Make and model names are factual data, not a licensed product.
-- **`uv run python -m scripts.load_taxonomy`** upserts by slug, is idempotent (a second run changes nothing), and **never deletes**: a row removed from the CSV is set `is_active = false`, so listings, saved searches and SEO URLs that reference it keep working. It runs in every environment as a deploy step after migrations (Feature 01 §15). It is separate from the demo seed, which production may or may not run.
+- **`uv run python -m scripts.load_taxonomy`** upserts by slug, is idempotent (a second run changes nothing), and **never deletes**: a row removed from the CSV is set `is_active = false`, so listings, saved searches and SEO URLs that reference it keep working. It runs in every environment as a deploy step after migrations (Feature 01 §15), inside a `pg_advisory_xact_lock` so concurrent runs serialise (A5). It is separate from the demo seed, which production may or may not run.
 - **Slugs are immutable once created.** A rename changes `name` only. Slugs appear in SEO URLs (Feature 13) and shared links; ids, not slugs, are what saved searches store (Feature 07).
 - **Enumerations are `text` columns with named CHECK constraints** (`ck_listing_fuel_type`, …), backed by one Python `StrEnum` each, not native Postgres enums:
   - `BodyType`: hatchback, saloon, estate, suv, coupe, convertible, mpv, pickup, van
@@ -106,7 +106,7 @@ plus `TimestampMixin`.
 seeded rows can never differ from real ones:
 - `build_title(year, make, model, variant)` → `"2019 Ford Fiesta 1.0 EcoBoost ST-Line 5dr"`
 - `listing_slug(title)` → `2019-ford-fiesta-1-0-ecoboost-st-line` (Feature 08 URL)
-- `derive_ulez(fuel_type, registration_date)`: Euro 4 petrol is roughly 2006 onward, Euro 6 diesel roughly September 2015 onward, EVs always qualify, everything else `false`. Labelled "Likely ULEZ compliant" in the UI with a TfL link.
+- `derive_ulez(fuel_type, registration_date)`: Euro 4 petrol is roughly 2006 onward, Euro 6 diesel roughly September 2015 onward, EVs always qualify, hybrids and plug-in hybrids follow the petrol cut-off because UK hybrids are overwhelmingly petrol-electric (A8), `other` is `false`. Labelled "Likely ULEZ compliant" in the UI with a TfL link.
 - `normalise_vrm(raw)`: upper-case, strip spaces and non-alphanumerics, validate length 2–7 (`None` if invalid). Every VRM comparison (duplicate detection, lookups, Feature 14 checks) uses the normalised form.
 - `region_for_postcode(postcode)`: outward code → ONS region via the bundled district CSV (§8).
 
@@ -124,17 +124,18 @@ No GIN on `specs` until a spec filter exists (§4 rule).
 ### 8. Demo seed — `uv run python -m scripts.seed_demo`
 | Flag | Behaviour |
 |---|---|
-| `--listings N` (default 5,000) | ~60 demo dealers (one per ~80 listings), spread across real UK postcode districts |
+| `--listings N` (default 5,000) | ~60 demo dealers (one per ~80 listings), spread across real UK postcode districts. Names come from neutral word lists and locations are district centroids with the outward code only, never a real full postcode (A2) |
 | `--random-seed S` (default 42) | Fully deterministic: the same seed and N produce an identical dataset (performance tests compare like with like) |
 | `--profile perf` | 50,000 listings for Feature 07's budgets. **Refused when `ENVIRONMENT=production`.** |
 | `--region R` | Only create (or with `--reset`, only remove) demo dealers in ONS region `R` |
 | `--reset` | Removes **only** `is_demo = true` dealers and listings (in `--region` if given). Never touches real rows. |
 
-- **Geography without network:** a bundled postcode-district centroid CSV (`backend/data/geo/postcode_districts.csv`: outward code, lat, lng, region code, post town), derived from the ONS Postcode Directory (Open Government Licence; attribution text to verify). Feature 04 and Feature 07 reuse it as the offline fallback when postcodes.io is unavailable.
+- **Geography without network:** a bundled postcode-district centroid CSV (`backend/data/geo/postcode_districts.csv`: outward code, lat, lng, region code, post town), derived by `scripts/build_postcode_districts.py` from the ONS Postcode Directory as the median coordinate of live geographic postcodes per outward code. ONSPD is OGL but contains Royal Mail, OS and ONS IPR, so the attribution text ships in `backend/data/geo/README.md` (A3). Feature 04 and Feature 07 reuse it as the offline fallback when postcodes.io is unavailable.
 - Make/model/year mix weighted toward the real UK used market (high counts of Ford, Vauxhall, VW, BMW, Mercedes, Audi, Toyota, Nissan, Kia, Hyundai)
 - **Prices from a depreciation curve** (`base_new_price × age_factor × mileage_factor ± noise`), so the price indicator (Feature 12) and price sort produce believable results. Mileage correlated with age (~7–9k miles/year ± variance).
 - **Real derivation path:** every seeded row is built by the §6 functions and goes through `visibility.on_change()`, so `title`, `ulez_compliant`, `listed_at` and `vrm` are set exactly as Feature 05 would set them. Bulk inserts (batches of 1,000) are allowed for speed, but **no column is hand-set** that a real writer derives. A post-seed check, `verify_listing_invariants()`, recomputes each derived field and fails on any mismatch. Feature 05 adds its publish validator to that check.
-- **Images:** this feature ships the bundled stock set (~40 licensed or generated photos keyed by body type, licences recorded in `backend/data/seed_images/LICENSES.md`). Attaching `ListingImage` rows is done by Feature 06 §8, which owns that table. Until then, cards render Feature 03's missing-image placeholder.
+- **Images:** none in this feature (A4). Sourcing redistributable stock photos and attaching `ListingImage` rows both move to Feature 06 §8, which owns that table. Until then, cards render Feature 03's missing-image placeholder.
+- **Demo plates can never be real plates (A1):** every demo VRM is `Z` + letter + age identifier + three letters (e.g. `ZA19KXR`). Current-format UK plates never use Z in the memory tag, so no demo listing can carry a stranger's registration.
 - **Never seed by scraping real listings.** The report notes the real site actively defends against that, and it is a legal risk.
 
 ### 9. Demo data in production (cold-start controls)

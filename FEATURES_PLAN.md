@@ -6,6 +6,7 @@ below (§2, §4, …) point into that report.
 
 Status legend: `Not Started` | `Planning` | `In Progress` | `Done`
 
+Every feature is built in slices following [`features/IMPLEMENTATION_PLAYBOOK.md`](features/IMPLEMENTATION_PLAYBOOK.md).
 Each feature has its own design doc in `features/NN-*.md` holding the scope, data
 model, endpoints, UI, key decisions and acceptance criteria. Build them in the
 order listed. Each one assumes the features before it are done.
@@ -80,7 +81,7 @@ Next.js server is the heaviest workload on that box so far. Do the free-tier res
 | # | Feature | Priority | Milestone | Realistic effort | Status |
 |---|---|---|---|---|---|
 | 01 | [Project Foundation](features/01-project-foundation.md) | Must-Have | M1 Foundation | 16h | Done |
-| 02 | [Vehicle Taxonomy & Seed Inventory](features/02-vehicle-taxonomy-and-seed-data.md) | Must-Have | M1 Foundation | 13h | Not Started |
+| 02 | [Vehicle Taxonomy & Seed Inventory](features/02-vehicle-taxonomy-and-seed-data.md) | Must-Have | M1 Foundation | 13h | Planning ([slices](features/02-vehicle-taxonomy-and-seed-data.slices.md)) |
 | 03 | [Design System & App Shell](features/03-design-system-and-app-shell.md) | Must-Have | M1 Foundation | 13h | Not Started |
 | 04 | [Auth Core & Dealer Accounts](features/04-auth-core-and-dealer-accounts.md) | Must-Have | M2 Supply | 16h | Not Started |
 | 05 | [Dealer Stock Management](features/05-dealer-stock-management.md) | Must-Have | M2 Supply | 19h | Not Started |

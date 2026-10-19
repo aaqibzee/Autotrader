@@ -79,7 +79,7 @@ Runs on the isolated `images` queue (concurrency 1, 768 MB memory limit; Feature
 - Seed images (`is_seed = true`) share keys across demo listings and are **never deleted** by listing deletion, takedown or the demo reset
 
 ### 8. Seed images (moved here from Feature 02)
-- Feature 02 §8 ships ~40 bundled stock photos. A one-off `scripts.upload_seed_images` processes them through §4 into `seed/{name}/…` keys.
+- This feature sources ~40 redistributable stock photos keyed by body type (CC0 or self-generated; licences in `backend/data/seed_images/LICENSES.md`), moved here from Feature 02 (its amendment A4). A one-off `scripts.upload_seed_images` processes them through §4 into `seed/{name}/…` keys.
 - `seed_demo` (Feature 02 §8) then attaches 4–12 `ListingImage` rows per demo listing, `status = ready`, `is_seed = true`, pointing at those shared keys, chosen by body type, and sets `photo_count` through the same recount as §4, so Feature 02's invariant check holds. No per-listing copies, so 50,000 perf listings cost no extra storage.
 
 ### 9. Dealer logos
