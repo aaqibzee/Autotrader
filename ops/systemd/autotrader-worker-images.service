@@ -1,0 +1,29 @@
+[Unit]
+Description=Autotrader Celery worker (images, CPU-bound)
+After=network-online.target
+Wants=network-online.target
+PartOf=autotrader.target
+
+[Service]
+EnvironmentFile=/etc/autotrader/autotrader.env
+# Unbuffered so logs reach journald immediately and survive a crash.
+Environment=PYTHONUNBUFFERED=1
+User=autotrader
+Group=autotrader
+WorkingDirectory=/opt/autotrader/current/backend
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/autotrader/shared
+ExecStart=/opt/autotrader/current/backend/.venv/bin/celery -A app.core.celery_app:celery_app worker -Q images -c 1 -n images@%%h --loglevel=INFO --max-memory-per-child=600000
+# Feature 01 §16 budget: this app shares the VM with Yaqlo, Duely, Scout and Suretly.
+MemoryMax=768M
+CPUQuota=100%
+KillSignal=SIGTERM
+TimeoutStopSec=120
+
+[Install]
+WantedBy=autotrader.target

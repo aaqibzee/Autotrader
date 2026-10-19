@@ -93,7 +93,7 @@ Runs on the isolated `images` queue (concurrency 1, 768 MB memory limit; Feature
 
 ### 11. Testing
 - Fixtures: a JPEG with GPS EXIF, an iPhone HEIC with rotation, a PNG with a `.jpg` name, a text file sent as `image/jpeg`, a 60 MP image, a truncated JPEG
-- Storage is MinIO in tests (Feature 01 §14). The Cloudflare purge client is stubbed.
+- Storage is the S3-compatible SeaweedFS stand-in in tests (Feature 01 §14/§16; MinIO was archived). The Cloudflare purge client is stubbed.
 
 ---
 

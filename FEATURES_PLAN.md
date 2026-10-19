@@ -62,7 +62,7 @@ the stack already proven across Yaqlo, Duely and Suretly:
 | Async work | **Celery + Redis** | Stands in for Kafka at MVP scale: image processing, alert digests, sitemap generation, valuation lookups. |
 | Database | **PostgreSQL** + SQLAlchemy 2.0 + Alembic | §2 notes the real platform uses SQL + MongoDB for highly variable vehicle specs. Here, **JSONB columns** hold the long-tail spec data next to typed, indexed columns for filterable attributes. |
 | Search | **PostgreSQL** (indexed filters, facet counts, bounding-box + haversine distance) | §3 says the real platform uses Elasticsearch/Solr-class search. That is deferred until listings reach the hundreds of thousands. Search sits behind a `SearchBackend` interface so it can be swapped later. |
-| Object storage | **S3-compatible** (MinIO locally, R2/S3 in production) | Holds the listing photos (§3 image pipeline). |
+| Object storage | **S3-compatible** (SeaweedFS locally, R2/S3 in production) | Holds the listing photos (§3 image pipeline). |
 | CDN / DNS / WAF | **Cloudflare** | Same edge layer the real platform uses (§2), and already in use for the other apps. |
 | Email | **Resend** | Saved-search alerts, lead notifications, auth emails. |
 | Auth | **FastAPI-Users** (cookie/session) | Two account types share one user table; see Feature 04 and Feature 09. |
@@ -79,7 +79,7 @@ Next.js server is the heaviest workload on that box so far. Do the free-tier res
 
 | # | Feature | Priority | Milestone | Realistic effort | Status |
 |---|---|---|---|---|---|
-| 01 | [Project Foundation](features/01-project-foundation.md) | Must-Have | M1 Foundation | 16h | Not Started |
+| 01 | [Project Foundation](features/01-project-foundation.md) | Must-Have | M1 Foundation | 16h | Done |
 | 02 | [Vehicle Taxonomy & Seed Inventory](features/02-vehicle-taxonomy-and-seed-data.md) | Must-Have | M1 Foundation | 13h | Not Started |
 | 03 | [Design System & App Shell](features/03-design-system-and-app-shell.md) | Must-Have | M1 Foundation | 13h | Not Started |
 | 04 | [Auth Core & Dealer Accounts](features/04-auth-core-and-dealer-accounts.md) | Must-Have | M2 Supply | 16h | Not Started |

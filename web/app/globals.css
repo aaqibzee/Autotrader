@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --ink: #17211f;
+  --muted: #66716e;
+  --paper: #f5f7f4;
+  --line: #dce2dd;
+  --signal: #d8f269;
+  --surface: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--paper);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: linear-gradient(rgba(23, 33, 31, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 33, 31, 0.025) 1px, transparent 1px);
+  background-size: 34px 34px;
+  font-family: var(--font-archivo), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+::selection {
+  color: var(--ink);
+  background: var(--signal);
+}
+
+.shell {
+  width: min(100% - 40px, 1160px);
+  margin-inline: auto;
+}
+
+.status-pulse {
+  animation: status-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgba(113, 151, 42, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

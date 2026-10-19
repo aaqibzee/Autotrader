@@ -1,0 +1,6 @@
+[Unit]
+Description=All Autotrader services
+Wants=autotrader-api.service autotrader-web.service autotrader-worker-notifications.service autotrader-worker-default.service autotrader-worker-images.service autotrader-beat.service
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "next-env.d.ts",
+    ".next/**",
+    "lib/api/schema.d.ts"
+  ],
+  "plugins": [
+    "typescript",
+    "react",
+    "nextjs",
+    "import"
+  ],
+  "rules": {
+    "no-debugger": "error",
+    "no-unused-vars": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "instrumentation-client.ts"
+      ],
+      "rules": {
+        "import/namespace": "off"
+      }
+    }
+  ]
+}

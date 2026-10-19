@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh the Autotrader Nginx Cloudflare allow-list
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 /usr/local/sbin/refresh-cloudflare-allowlist.py --output /etc/nginx/autotrader/cloudflare-allowlist.conf
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ReadWritePaths=/etc/nginx/autotrader

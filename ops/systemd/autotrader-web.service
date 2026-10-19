@@ -1,0 +1,29 @@
+[Unit]
+Description=Autotrader web (Next.js standalone SSR)
+After=network-online.target autotrader-api.service
+Wants=network-online.target
+PartOf=autotrader.target
+
+[Service]
+EnvironmentFile=/etc/autotrader/autotrader.env
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+Environment=NODE_OPTIONS=--max-old-space-size=384
+User=autotrader
+Group=autotrader
+WorkingDirectory=/opt/autotrader/current/web/.next/standalone
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# Feature 01 §16 budget.
+MemoryMax=512M
+CPUQuota=100%
+TimeoutStopSec=20
+
+[Install]
+WantedBy=autotrader.target

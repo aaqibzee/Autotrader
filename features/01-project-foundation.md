@@ -1,6 +1,6 @@
 # Feature 01 — Project Foundation
 
-**Status:** Not Started
+**Status:** Done (2026-10-19). See "Implementation notes" at the end for deviations and what still needs a real VM/CI run.
 **Priority:** Must-Have (prerequisite for everything else)
 **Milestone:** M1 Foundation
 **Effort:** 8h optimistic / 16h realistic / 24h pessimistic
@@ -13,7 +13,7 @@ slightly differently. See "Scale review" at the end.)*
 
 The repo, tooling, environments and **cross-cutting conventions** every later
 feature builds on: a FastAPI modular monolith, a Next.js web app,
-Postgres/Redis/MinIO in docker-compose, CI, observability, and the shared building
+Postgres/Redis/S3-compatible storage in docker-compose, CI, observability, and the shared building
 blocks (HTTP client, error format, job dispatch, test factories) that features 02–15
 assume exist. No product behaviour ships here. This feature exists so that features
 02–15 never have to make a structural decision. A decision that is cheap now and
@@ -46,7 +46,7 @@ Autotrader/
   ops/                    docker/, k6/, runbooks/
   Documents/              due-diligence report + future specs
   features/               these design docs
-  docker-compose.yml      postgres:16, redis:7 (x2 logical roles), minio
+  docker-compose.yml      postgres:16, redis:7 (x2 logical roles), seaweedfs (S3)
   .env.example
   .pre-commit-config.yaml
 ```
@@ -54,7 +54,7 @@ Autotrader/
 ### 2. Environments & config
 - Three environments: **local**, **staging**, **production**, selected by `ENVIRONMENT`. Staging may share the production VM but has its own database, Redis DB indexes, bucket, subdomain and `.env`.
 - pydantic-settings loads the repo-root `.env` **by absolute path** (uvicorn, celery and pytest all have different working directories, a lesson learned in Yaqlo)
-- **The app refuses to boot outside `local`** if any secret still holds its `.env.example` placeholder (`SECRET_KEY`, MinIO keys, DB password)
+- **The app refuses to boot outside `local`** if any secret still holds its `.env.example` placeholder (`SECRET_KEY`, S3 keys, DB password)
 - Production secrets live only in the server-side `.env` (mode 600, owned by the service user) and are never committed. The `.env.example` lists every key with a comment. Rotation procedure documented in `ops/runbooks/secrets.md`.
 - **Feature flags:** a minimal `FeatureFlag` table plus a settings override (`FLAG_<NAME>=on`), read through `flags.is_enabled(name)`, cached for 30 s. Feature 12's "Value my car" flag is the first user. No third-party service.
 
@@ -156,7 +156,7 @@ changes a cached shape doesn't read old entries.
 - **Secret scanning:** gitleaks in pre-commit **and** CI (CI is the backstop when hooks are skipped)
 - **Dependency hygiene:** committed lockfiles (`uv.lock`, `package-lock.json`), Renovate/Dependabot weekly with grouped minor updates, and `pip-audit` + `npm audit --audit-level=high` in CI, failing on high/critical (moved here from Feature 14)
 - **Log redaction:** a structlog processor masks emails (`j***@g***.com`), UK phone numbers, VRMs (`AB12 ***`), postcodes beyond the outward code, tokens and `Authorization`/`Cookie` headers. A test asserts that a request carrying each kind of personal data produces log lines without it. (UK GDPR: logs are retained and shipped to third parties, so they must not become a personal-data store.)
-- **Object storage:** buckets are private by default. Public read is only through the CDN path for processed image variants (Feature 06). MinIO root credentials are never the defaults outside local. Each environment has its own buckets (a private `uploads` bucket and a public-read `images` bucket, Feature 06 §3) and its own access key with bucket-scoped permissions.
+- **Object storage:** buckets are private by default. Public read is only through the CDN path for processed image variants (Feature 06). The object-storage admin identity is never given to the app, and no default credential survives outside local. Each environment has its own buckets (a private `uploads` bucket and a public-read `images` bucket, Feature 06 §3) and its own access key with bucket-scoped permissions.
 - **Web CSP:** set from Next.js middleware with a per-request nonce. `default-src 'self'`, `img-src 'self' img.<domain> data: blob:` (`blob:` for upload previews), `connect-src 'self'` plus the error-tracking ingest host and the uploads-bucket host (direct presigned uploads, Feature 06 §3), and `frame-ancestors 'none'`.
 
 ### 12. Observability
@@ -174,7 +174,7 @@ changes a cached shape doesn't read old entries.
 - A home page that renders the `/health/ready` status (a temporary placeholder for Feature 03)
 
 ### 14. Testing foundation
-- **Backend:** `conftest.py` creates and migrates a dedicated `<db>_test` database (`127.0.0.1`, not `localhost`, to avoid the IPv6 hang seen on this machine) and **blocks all network access** except the DB, Redis and MinIO.
+- **Backend:** `conftest.py` creates and migrates a dedicated `<db>_test` database (`127.0.0.1`, not `localhost`, to avoid the IPv6 hang seen on this machine) and **blocks all network access** except the DB, Redis and object storage.
   - **pytest-xdist** with one database per worker (`<db>_test_gw0…`), so the suite stays fast as it grows
   - **factory_boy factories** for every model, built through the **real service functions** where a service owns the write path (Yaqlo's `raw_ics_data` lesson: hand-built fixtures masked a column the real writer never set)
   - **Query-count assertion helper** (`with assert_max_queries(5): …`), mandatory in tests for every list endpoint, to catch N+1 queries
@@ -201,7 +201,7 @@ build → `app_migrate` runs Alembic → restart services → wait for `/health/
 previous release (§6), so code rollback never needs a schema rollback.
 
 ### 16. Local dev & resource limits
-- `docker compose up -d`: Postgres 16 (with `pg_stat_statements` preloaded), Redis broker + cache, MinIO plus an init container that creates the bucket, policy and access key
+- `docker compose up -d`: Postgres 16 (with `pg_stat_statements` preloaded), Redis broker + cache, SeaweedFS (S3-compatible) with a bucket-scoped app identity, plus an init container that creates the bucket
 - `make dev` / `just dev` starts the API, web, worker(s) and beat. `make seed` runs Feature 02's seed.
 - **Production containers and services get memory and CPU limits** (systemd `MemoryMax`/`CPUQuota` or compose `deploy.resources`). Starting budget on the shared VM: API 512 MB, web 512 MB, image worker 768 MB, other workers 256 MB each, beat 128 MB. This is the Autotrader app's share of a VM it shares with Yaqlo, Duely, Scout and Suretly. One runaway image job must not take the other apps down.
 - **Maintenance page:** the reverse proxy serves a static branded 503 page with `Retry-After` while the app is unavailable (deploy, migration, crash), instead of a raw 502
@@ -321,3 +321,50 @@ formatting helpers (§13), pre-commit + type checking (§10), feature flags (§2
 | Search engine (OpenSearch) | Feature 07 p95 budget breached at real volume (Phase 2) |
 | Blue/green or canary deploys | More than one app instance, or a deploy-caused incident |
 | Multi-region / Kubernetes | Not foreseeable at MVP scale. The report's real platform needs it (§2), but this MVP doesn't. |
+
+---
+
+## Implementation notes (2026-10-19)
+
+**Deviations from the plan above, and why**
+- **Object storage is SeaweedFS locally/CI, not MinIO.** MinIO's community project was archived and its images are no longer pullable from Docker Hub or quay.io, so a fresh CI runner could not start the stack. SeaweedFS (pinned `3.97`) speaks the same S3 API; its declarative identities keep the bucket-scoped app key rule (verified: the app key can head/put/presign-upload its bucket and cannot create others). Settings are now vendor-neutral `S3_*`. Production remains R2/S3.
+- **`statement_timeout` is set per connection** (`DB_STATEMENT_TIMEOUT_MS`, default 5000) as well as on the `app_rw` role. A role's `ALTER ROLE ... SET` only applies to the login role, never via `SET ROLE`, so relying on it alone left the 5 s cap unenforced.
+- **Roles/grants live in `ops/postgres/roles.sql`**, idempotent and applied by Compose init, `make db-roles`, and the test harness (grants are per-database, so every per-worker test DB needs them).
+- **Log redaction masks to tokens** (`[redacted-email]`, `[redacted-vrm]`...) rather than partial masks like `j***@g***.com`: a partial mask still leaks enough to re-identify on a small dataset.
+- **Idempotency keys are scoped to the caller** (session cookie, else client IP), so one client can never be replayed another's stored response. Reusing a key with a different body is 422; a duplicate while the original is in flight is 409 + `Retry-After`; 5xx is not stored; Redis down fails open with a warning.
+- **The coverage gate includes `app/core`** (85%; 89% at completion). Gating only `app/services`/`app/modules` measured nothing, since both are still empty.
+- **Route templates for logs/metrics are rebuilt from the matched route** (`metrics.route_template_for`): FastAPI >= 0.13x mounts included routers lazily and `scope['route'].path` drops the `/api/v1` prefix.
+
+**Bugs found and fixed while completing this feature**
+- CI could never have passed: an invalid `ruff format --quote-style` flag; `check_web_fetch.mjs` could not resolve `typescript`; oxlint failed on generated `next-env.d.ts`; `minio/mc` unpullable.
+- `/health/ready` ran blocking DB/Redis/S3 I/O on the event loop, with no S3 timeout (a hung bucket hung the probe). It now runs checks concurrently off-loop with per-check timeouts, names every failing dependency, and caches the verdict for 1 s against probe floods.
+- Celery workers never initialised logging/Sentry/OTel, so **worker logs printed personal data unredacted** (reproduced, then covered by a subprocess test). Stdlib loggers (Celery, uvicorn, SQLAlchemy) also bypassed redaction; uvicorn's access log printed raw query strings. All now go through one redacting JSON pipeline with a templated `http_request` access line.
+- nginx `proxy_intercept_errors` replaced the API's own 503 problem+json with the HTML maintenance page.
+- The OpenAPI post-processor dropped the `ProblemDetails` schema, so every error response was `unknown` in the generated web types.
+- `formatPrice` rendered 50p as `£12,495.5`.
+- Feature-flag names: `is_enabled()` normalises before querying, but nothing stopped a row being stored unnormalised (it would silently never turn on). A CHECK constraint now enforces the normalised form (migration `d4dbde7c7413`).
+
+**Acceptance criteria: how each was verified**
+| Criterion | Evidence |
+|---|---|
+| Live/ready split, 503 names dependency, recovers without restart | tests + real stack (`pool_pre_ping`) |
+| Placeholder secret refuses boot, naming the key | parametrised test, one per secret |
+| Spoofed `CF-Connecting-IP` ignored | tests |
+| RFC 9457 errors, validation `errors[]` | tests |
+| Idempotency replay | 8 tests on real Redis |
+| Integration timeout -> `IntegrationUnavailable`; breaker opens at 5 | tests |
+| Rollback sends no task; committed task sees its row | **real in-thread worker + real broker + Postgres** |
+| Second beat exits "lock held" | test; real beat booted |
+| Extensions, migration round trip, `alembic check` | run locally, in CI |
+| `app_rw` cannot DDL; >5 s query -> clean 503 | tests on real Postgres |
+| PII masked in logs (email, phone, VRM, postcode) | tests + real uvicorn run (0 raw occurrences) |
+| `/metrics` internal only | test; nginx returns 404 |
+| Parallel per-worker DBs, network blocked, N+1 guard | tests |
+| Stale `schema.d.ts` / import-linter violation fail CI | CI steps; import probe run locally |
+
+**Not yet verifiable from a dev machine; check on first real run**
+- "All CI jobs green on a fresh clone": nothing is committed or pushed yet.
+- `images` flood does not delay `notifications` by > 5 s: guaranteed structurally (separate queues + separate systemd workers), not load-tested.
+- Same `request_id` chain visible in a real Sentry project: tags are wired (API, worker, web `onRequestError`); needs a DSN.
+- `ops/deploy/deploy.sh` (release dirs, migrate, atomic switch, ready-wait, rollback) and `ops/systemd/*` (memory/CPU limits): shellcheck and `systemd-analyze verify` clean, but never executed on the VM.
+- Web source-map upload runs only when CI provides `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT`.

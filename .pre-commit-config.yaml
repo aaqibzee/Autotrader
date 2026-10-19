@@ -1,0 +1,49 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.5.3
+    hooks:
+      - id: prettier
+        files: '^(web/.*|ops/.*\.(json|md|ya?ml)|\.github/.*\.(json|md|ya?ml)|docker-compose\.yml|README\.md)$'
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: import-linter
+        name: import-linter
+        entry: uv run --directory backend lint-imports --no-cache
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: pyright
+        name: pyright
+        entry: uv run --directory backend --with pyright pyright app
+        language: system
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+      - id: web-oxlint
+        name: web oxlint
+        entry: npm --prefix web run lint
+        language: system
+        pass_filenames: false
+        files: '^web/.*\.(js|jsx|ts|tsx)$'
+      - id: web-fetch-boundary
+        name: web fetch boundary
+        entry: node ops/ci/check_web_fetch.mjs
+        language: system
+        pass_filenames: false
+        files: '^web/.*\.(js|jsx|ts|tsx)$'
