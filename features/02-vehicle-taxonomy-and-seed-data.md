@@ -1,6 +1,6 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A11) applied below.
+**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A13) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
 **Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)
@@ -46,9 +46,10 @@ against real volume rather than an empty table.
 demo dealers. This feature creates the core; Feature 04 adds the account columns
 (address, phone, approval fields, logo, opening hours) in its own migration.
 
-`id` (UUIDv7), `name`, `slug` (unique, immutable once approved), `postcode`,
-`latitude`, `longitude`, `region_code` (ONS region, derived from the postcode
-district), `status` (`pending` / `approved` / `rejected` / `suspended`, CHECK; transitions owned by Feature 14 §3), `is_demo` (bool),
+`id` (UUIDv7), `name`, `slug` (unique, immutable once approved), `postcode` (normalised,
+`SW1A 1AA` or outward code only, CHECK), `latitude`, `longitude` (nullable together: no
+offline centroid for Northern Ireland, A11), `region_code` (ONS region, derived from the
+postcode district; enum CHECK over the 12 codes, A13), `status` (`pending` / `approved` / `rejected` / `suspended`, CHECK; transitions owned by Feature 14 §3), `is_demo` (bool),
 plus `TimestampMixin`.
 
 ### 3. `Listing` (the central table; Feature 05 is its main writer)
@@ -60,7 +61,7 @@ plus `TimestampMixin`.
 | `dealer_id` | FK → `dealer.id` |
 | `status` | `draft` / `active` / `reserved` / `sold` / `archived` (CHECK). The dealer-driven lifecycle, owned by Feature 05. |
 | `moderation_status` | `clear` / `held` / `hidden` / `removed` (CHECK, default `clear`). **System-owned** (§5); written only by Feature 14's moderation service. |
-| `make_id`, `model_id` | FK → taxonomy |
+| `make_id`, `model_id` | FK → taxonomy; composite FK `(make_id, model_id)` → `vehicle_models (make_id, id)` so the model belongs to the make (A13) |
 | `variant` | text ≤ 80 chars, free text ("1.0 EcoBoost ST-Line 5dr") |
 | `year`, `registration_date` | `year` CHECK 1900–2100 (the "not in the future" rule is app-level) |
 | `mileage` | int miles, CHECK 0–1,000,000 |
@@ -78,15 +79,16 @@ plus `TimestampMixin`.
 | `listed_at` | **system-owned** (§5): the first moment the listing became publicly visible. Set once, never reset. |
 | `photo_count` | int, default 0, **system-owned** (§5): number of `ready` images, kept by Feature 06 §4–§5; used by Feature 07's best-match sort |
 | `sold_at`, `archived_at` | timestamps for the matching states |
-| `is_demo` | bool, copied from `dealer.is_demo` at create |
+| `is_demo` | bool, copied from `dealer.is_demo` at create; composite FK `(dealer_id, is_demo)` → `dealers (id, is_demo)` keeps them equal (A13) |
 | `specs`, `specs_version` | JSONB + int (§4) |
 | `created_at`, `updated_at` | `TimestampMixin`; `updated_at` is the optimistic-lock token (Feature 01 §5) |
 
 **Consistency CHECKs (the database refuses contradictory rows):**
 - `(status = 'archived') = (archived_at IS NOT NULL)`: one soft-delete signal (Feature 01 §5), not two that can disagree
 - `status <> 'sold' OR sold_at IS NOT NULL`
-- `status = 'draft' OR published_at IS NOT NULL`
+- `status IN ('draft','archived') OR published_at IS NOT NULL` (an unpublished draft can be archived, A12)
 - `listed_at IS NULL OR published_at IS NOT NULL`
+- **Drafts may be incomplete (A12):** the vehicle fields Feature 05's publish validator requires, plus `ulez_compliant` and a non-empty `title`, are nullable; `ck_listings_publish_complete` requires all of them unless `status` is `draft` or `archived`.
 
 ### 4. `specs` JSONB (display-only long tail, versioned)
 - Validated on every write by a Pydantic model `ListingSpecsV1` (`extra="forbid"`), stored with `specs_version = 1`. A later shape change adds `ListingSpecsV2` plus an upgrade function applied on read, mirroring Feature 07's `SearchParams` versioning.

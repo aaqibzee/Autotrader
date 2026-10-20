@@ -16,6 +16,24 @@ from sqlalchemy import CheckConstraint, MetaData
 
 _INFO_KEY = 'enum_check'
 
+# Slugs appear in SEO URLs (Feature 13) and are immutable once created, so the database
+# refuses anything that is not already in URL form. Shared by every slugged table.
+SLUG_PATTERN = r'^[a-z0-9]+(-[a-z0-9]+)*$'
+
+
+def slug_format_check(column: str = 'slug') -> CheckConstraint:
+    """A CHECK named `ck_<table>_<column>_format` holding `column` to `SLUG_PATTERN`."""
+    return CheckConstraint(f"{column} ~ '{SLUG_PATTERN}'", name=f'{column}_format')
+
+
+def coordinate_checks() -> tuple[CheckConstraint, ...]:
+    """`latitude`/`longitude` are set together or not at all, and are real coordinates."""
+    return (
+        CheckConstraint('(latitude IS NULL) = (longitude IS NULL)', name='coordinates_paired'),
+        CheckConstraint('latitude BETWEEN -90 AND 90', name='latitude_range'),
+        CheckConstraint('longitude BETWEEN -180 AND 180', name='longitude_range'),
+    )
+
 
 @dataclass(frozen=True)
 class EnumCheck:

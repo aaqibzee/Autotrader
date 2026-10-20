@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.session import SyncSessionLocal, sync_engine
+from app.db.uuid7 import uuid7
 from app.modules.taxonomy import services
 from app.modules.taxonomy.dataset import (
     AliasRow,
@@ -216,6 +217,41 @@ def test_removed_model_is_deactivated_not_deleted_and_comes_back() -> None:
     with SyncSessionLocal() as session:
         assert _model(session, 'ford', 'focus').is_active
         assert resolve_model(session, ford_id, 'Focus RS') == focus_id
+
+
+def test_a_listing_on_a_removed_model_survives_the_load() -> None:
+    # Finishes 2.2's "a reference row survives" now that listings exist (slice 2.4).
+    _load(_small())
+    dealer_id, listing_id = uuid7(), uuid7()
+    with SyncSessionLocal.begin() as session:
+        focus = _model(session, 'ford', 'focus')
+        focus_id, ford_id = focus.id, focus.make_id
+        session.execute(
+            text(
+                "INSERT INTO dealers (id, name, slug, postcode) VALUES (:id, 'Example', :slug, 'M1')"
+            ),
+            {'id': dealer_id, 'slug': f'loader-probe-{dealer_id.hex}'},
+        )
+        session.execute(
+            text(
+                'INSERT INTO listings (id, dealer_id, make_id, model_id) '
+                'VALUES (:id, :dealer_id, :make_id, :model_id)'
+            ),
+            {'id': listing_id, 'dealer_id': dealer_id, 'make_id': ford_id, 'model_id': focus_id},
+        )
+    try:
+        report = _load(_small(models=(_FIESTA,)))
+
+        assert report.deactivated == 1
+        with SyncSessionLocal() as session:
+            model_id = session.execute(
+                text('SELECT model_id FROM listings WHERE id = :id'), {'id': listing_id}
+            ).scalar_one()
+            assert model_id == focus_id
+            assert _model(session, 'ford', 'focus').is_active is False
+    finally:
+        with sync_engine.begin() as conn:
+            conn.execute(text('DELETE FROM dealers WHERE id = :id'), {'id': dealer_id})
 
 
 def test_removed_make_and_its_models_are_deactivated() -> None:

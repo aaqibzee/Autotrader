@@ -17,29 +17,18 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from app.modules.geo.enums import REGION_NAMES, Region
+
 DEFAULT_DISTRICTS_FILE = (
     Path(__file__).resolve().parents[3] / 'data' / 'geo' / 'postcode_districts.csv'
 )
 COLUMNS = ('outward_code', 'latitude', 'longitude', 'region_code', 'area_name')
 
-# The 12 ONS regions and nations: nine English regions, then Wales, Scotland and
-# Northern Ireland, which have no region tier and use their country code.
-REGIONS: dict[str, str] = {
-    'E12000001': 'North East',
-    'E12000002': 'North West',
-    'E12000003': 'Yorkshire and The Humber',
-    'E12000004': 'East Midlands',
-    'E12000005': 'West Midlands',
-    'E12000006': 'East of England',
-    'E12000007': 'London',
-    'E12000008': 'South East',
-    'E12000009': 'South West',
-    'W92000004': 'Wales',
-    'S92000003': 'Scotland',
-    'N92000002': 'Northern Ireland',
-}
+# Every ONS region/nation code, with its name (Northern Ireland has no rows in the file and
+# is reached by rule, see `region_for_postcode`).
+REGIONS = REGION_NAMES
 
-NORTHERN_IRELAND = 'N92000002'
+NORTHERN_IRELAND = Region.NORTHERN_IRELAND
 
 OUTWARD_PATTERN = re.compile(r'[A-Z]{1,2}[0-9][A-Z0-9]?')
 _NORTHERN_IRELAND_AREA = re.compile(r'BT[0-9]{1,2}')

@@ -14,8 +14,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.db.checks import SLUG_PATTERN
 from app.modules.taxonomy.enums import BodyType
-from app.modules.taxonomy.models import SLUG_PATTERN
 from app.modules.taxonomy.naming import normalise_lookup
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parents[3] / 'data' / 'taxonomy'

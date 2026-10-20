@@ -15,20 +15,13 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin
-from app.db.checks import enum_check
+from app.db.checks import enum_check, slug_format_check
 from app.db.uuid7 import uuid7
 from app.modules.taxonomy.enums import BodyType
 
-# Slugs appear in SEO URLs (Feature 13) and are immutable once created, so the database
-# refuses anything that is not already in URL form.
-SLUG_PATTERN = r'^[a-z0-9]+(-[a-z0-9]+)*$'
 # The exact output of `naming.normalise_lookup`. Resolvers reduce their input to that form
 # before looking an alias up, so an alias stored in any other form could never match.
 ALIAS_PATTERN = r'^[A-Z0-9]+$'
-
-
-def _slug_format() -> CheckConstraint:
-    return CheckConstraint(f"slug ~ '{SLUG_PATTERN}'", name='slug_format')
 
 
 def _alias_normalised() -> CheckConstraint:
@@ -37,7 +30,7 @@ def _alias_normalised() -> CheckConstraint:
 
 class Make(TimestampMixin, Base):
     __tablename__ = 'makes'
-    __table_args__ = (_slug_format(),)
+    __table_args__ = (slug_format_check(),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
     name: Mapped[str] = mapped_column(String(80), nullable=False)
@@ -54,7 +47,9 @@ class VehicleModel(TimestampMixin, Base):
     __tablename__ = 'vehicle_models'
     __table_args__ = (
         UniqueConstraint('make_id', 'slug'),
-        _slug_format(),
+        # Target of listings' composite FK, so a listing's model always belongs to its make.
+        UniqueConstraint('make_id', 'id'),
+        slug_format_check(),
         enum_check('body_types', BodyType, array=True),
     )
 
