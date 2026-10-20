@@ -1,59 +1,46 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Colours come only from styles/tokens.css; no literals here (styles/tokens.test.ts). */
 
 :root {
   color-scheme: light;
-  --ink: #17211f;
-  --muted: #66716e;
-  --paper: #f5f7f4;
-  --line: #dce2dd;
-  --signal: #d8f269;
-  --surface: #ffffff;
-}
-
-* {
-  box-sizing: border-box;
 }
 
 html {
   min-height: 100%;
-  background: var(--paper);
+  background-color: var(--color-canvas);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  color: var(--ink);
-  background-color: var(--paper);
-  background-image: linear-gradient(rgba(23, 33, 31, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(23, 33, 31, 0.025) 1px, transparent 1px);
-  background-size: 34px 34px;
-  font-family: var(--font-archivo), sans-serif;
+  color: var(--color-ink);
+  background-color: var(--color-canvas);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-button,
-a {
-  font: inherit;
-}
-
 ::selection {
-  color: var(--ink);
-  background: var(--signal);
+  color: var(--color-ink);
+  background-color: var(--color-signal);
 }
 
-.shell {
-  width: min(100% - 40px, 1160px);
+/* Visible focus for keyboard users only (Feature 03 §8): 2px, 3:1 against both backgrounds. */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Page width container, 16px gutters on phones. */
+@utility shell {
+  width: min(100% - 2rem, 72.5rem);
   margin-inline: auto;
 }
 
-.status-pulse {
-  animation: status-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes status-pulse {
-  50% {
-    box-shadow: 0 0 0 5px rgba(113, 151, 42, 0.12);
-  }
+/* Prices, mileage and counts line up in columns (Feature 03 §1). */
+@utility figures {
+  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -62,6 +49,7 @@ a {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }

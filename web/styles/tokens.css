@@ -1,0 +1,88 @@
+/*
+ * Design tokens (Feature 03 §1). The single source of every colour, radius, shadow and
+ * layer on the site.
+ *
+ * Rules, enforced by styles/tokens.test.ts:
+ * - Tailwind's default palette is cleared (A15), so `text-gray-500` produces no CSS and
+ *   every colour on a page is one of these tokens.
+ * - Colours are hex only, so the contrast test can parse them without a colour library.
+ * - Every colour token is in at least one pairing in styles/pairings.ts, whose WCAG ratio
+ *   the test checks, or is listed there as decorative with a reason.
+ */
+@theme {
+  --color-*: initial;
+
+  /* Neutrals: ink for text, surfaces for backgrounds. */
+  --color-ink: #111816;
+  --color-ink-soft: #3a4542;
+  --color-ink-muted: #56615d;
+  --color-ink-subtle: #66716e;
+  --color-border-strong: #7d8884;
+  --color-line: #dce2dd;
+  --color-surface: #ffffff;
+  --color-canvas: #f5f7f4;
+  --color-sunken: #eef1ee;
+
+  /* Brand. */
+  --color-brand: #2b7a4f;
+  --color-brand-strong: #1f5c3d;
+  --color-brand-tint: #e6f2ea;
+  --color-signal: #d8f269;
+
+  /* Semantic. */
+  --color-success: #1e6b3a;
+  --color-success-tint: #e8f5ec;
+  --color-warning: #7a4b00;
+  --color-warning-tint: #fff4dc;
+  --color-danger: #b42318;
+  --color-danger-tint: #fdecea;
+  --color-info: #1d5aa6;
+  --color-info-tint: #e8f0fb;
+
+  /* Price indicator (Feature 12 §6): text on tint. */
+  --color-price-great: #0d5c33;
+  --color-price-great-tint: #e2f4e8;
+  --color-price-good: #3d5c12;
+  --color-price-good-tint: #eef6e0;
+  --color-price-fair: #3c4a57;
+  --color-price-fair-tint: #eef1f4;
+  --color-price-high: #9a2f12;
+  --color-price-high-tint: #fdebe4;
+  --color-price-none: #4d5753;
+  --color-price-none-tint: #f1f3f2;
+
+  --color-focus: #1d5aa6;
+
+  /* Type. */
+  --font-*: initial;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Radius and shadow: named, small sets. */
+  --radius-*: initial;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --shadow-*: initial;
+  --shadow-card: 0 1px 2px rgb(17 24 22 / 0.06), 0 4px 16px rgb(17 24 22 / 0.06);
+  --shadow-overlay: 0 12px 48px rgb(17 24 22 / 0.18);
+}
+
+/*
+ * Named layers (Feature 03 §1), so overlays never fight over a z-index. Tailwind v4 has
+ * no z-index theme namespace, hence utilities. Order: header < sheet < modal < toast.
+ */
+@utility z-header {
+  z-index: 30;
+}
+@utility z-sheet {
+  z-index: 40;
+}
+@utility z-modal {
+  z-index: 50;
+}
+@utility z-toast {
+  z-index: 60;
+}
