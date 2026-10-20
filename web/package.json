@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "build:standalone": "next build && node scripts/prepare-standalone.mjs",
+    "start:standalone": "node .next/standalone/server.js",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "oxlint --deny-warnings --react-plugin --nextjs-plugin .",
     "test": "vitest run --pool=threads --maxWorkers=1",

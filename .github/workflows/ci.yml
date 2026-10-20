@@ -194,11 +194,18 @@ jobs:
         run: uv sync --directory backend --frozen --no-dev && npm ci --prefix web
       - name: Apply schema migrations
         run: uv run --directory backend alembic upgrade head
+      - name: Build the production web server
+        working-directory: web
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build:standalone
       - name: Install Chromium
         working-directory: web
         run: npx playwright install --with-deps chromium
-      - name: Run browser smoke test
+      - name: Run browser tests against the production build
         working-directory: web
+        env:
+          E2E_SKIP_BUILD: '1'
         run: npm run e2e
 
   security:

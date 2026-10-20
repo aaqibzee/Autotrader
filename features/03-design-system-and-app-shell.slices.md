@@ -14,7 +14,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | # | Slice | Est. | Depends on | Status |
 |---|---|---|---|---|
 | 3.1 | Tokens, font, contrast test, web coverage scope | 1.5 h | — | Done (2026-10-20) |
-| 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Not started |
+| 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Built (2026-10-20); awaiting the first CI e2e run |
 | 3.3 | First-load JS budget and lazy Sentry | 1.5 h | 3.2 | Not started |
 | 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Not started |
 | 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Not started |
@@ -232,6 +232,36 @@ production server.
 - Unit test of `buildContentSecurityPolicy` asserting the directives.
 - Real process: `next build` and `next start` run locally once (check free RAM first,
   playbook §7). If the build is OOM-killed locally, record it and rely on CI for the build.
+
+**Notes (built 2026-10-20):**
+- e2e serves the **standalone** server (`node .next/standalone/server.js`), which is what
+  systemd runs in production, rather than `next start`, which Next does not support with
+  `output: "standalone"`. `scripts/prepare-standalone.mjs` copies `.next/static` and
+  `public/` into the standalone tree. `npm run build:standalone` is now the single build
+  path for `deploy.sh` (replacing its inline `cp` lines) and the CI e2e job, which builds in
+  its own step and runs Playwright with `E2E_SKIP_BUILD=1`.
+- `e2e/csp.spec.ts` proves the environment as well as the policy: `'unsafe-eval'` is absent
+  from the CSP header, and `next dev` always adds it. A run that silently fell back to a dev
+  server therefore fails.
+- CSP built in `lib/security/csp.ts` (pure, unit-tested against the exact directive list,
+  so any widening shows in a diff); `middleware.ts` only supplies the nonce and env.
+- The guard: `e2e/fixtures.ts` extends `test` with an auto fixture that records
+  `securitypolicyviolation` events through an init script and an exposed binding. Both are
+  injected over CDP, so the policy under test cannot block the guard. Every test fails on
+  any violation unless the spec sets `allowCspViolations`. oxlint `no-restricted-imports`
+  bans importing `test`/`expect` from `@playwright/test` in `e2e/**` (probe spec rejected;
+  `fixtures.ts` exempt).
+- Negative proof is permanent rather than a one-off: `/dev/csp-probe` renders an un-nonced
+  `<style>` and a server-rendered style attribute. The spec asserts the guard saw exactly
+  one `style-src-elem` violation and none for attributes, and that the browser really
+  dropped the element's rule while applying the attribute.
+- `lib/dev/gallery.ts` (`galleryEnabled`, exact `"1"` only) landed here for the probe;
+  3.6's gallery reuses it. `/dev/*` pages call `notFound()` without the flag and are
+  `force-dynamic`, so the check runs per request, not at build.
+- `global-error.tsx` imports `globals.css` and uses token classes, with no inline styles.
+- **Not run locally:** `next build` and the e2e suite (0.2–0.35 GB free, playbook §7).
+  Typecheck, lint, unit tests and `playwright test --list` pass. The first real proof of
+  this slice is CI's e2e job; until it is green, 3.2 is Built, not Done.
 
 ---
 

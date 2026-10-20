@@ -2,10 +2,12 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import "./globals.css";
 
 /**
- * Last-resort boundary for errors thrown by the root layout itself. It replaces the
- * whole document, so it renders its own <html>/<body> and relies on no app styles.
+ * Last-resort boundary for errors thrown by the root layout itself. It replaces the whole
+ * document, so it renders its own <html>/<body> and imports the stylesheet itself. No
+ * inline styles: an inline <style> element would be blocked by the CSP (Feature 03 A2).
  */
 export default function GlobalError({
   error,
@@ -20,17 +22,19 @@ export default function GlobalError({
 
   return (
     <html lang="en-GB">
-      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0, padding: "4rem 1.5rem" }}>
-        <main style={{ maxWidth: "40rem", margin: "0 auto" }}>
-          <h1 style={{ fontSize: "2rem", margin: 0 }}>We could not load this page.</h1>
-          <p style={{ color: "#4a5551" }}>Please try again in a moment.</p>
-          <button onClick={reset} type="button" style={{ padding: "0.5rem 1rem" }}>
+      <body className="font-sans">
+        <main className="shell flex min-h-screen flex-col items-start justify-center">
+          <h1 className="text-4xl font-semibold tracking-tight">We could not load this page.</h1>
+          <p className="mt-3 text-ink-muted">Please try again in a moment.</p>
+          <button
+            className="mt-6 border border-ink px-4 py-2 text-sm font-semibold hover:bg-ink hover:text-surface"
+            onClick={reset}
+            type="button"
+          >
             Try again
           </button>
           {error.digest && (
-            <p style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "#4a5551" }}>
-              Reference: {error.digest}
-            </p>
+            <p className="mt-4 font-mono text-xs text-ink-muted">Reference: {error.digest}</p>
           )}
         </main>
       </body>

@@ -1,45 +1,18 @@
+import { buildContentSecurityPolicy } from "@/lib/security/csp";
 import { NextResponse, type NextRequest } from "next/server";
-
-function configuredOrigin(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
-      return undefined;
-    }
-    return url.origin;
-  } catch {
-    return undefined;
-  }
-}
-
-function buildContentSecurityPolicy(nonce: string): string {
-  const imageCdn = configuredOrigin(process.env.IMAGE_CDN_ORIGIN);
-  const errorIngest = configuredOrigin(process.env.ERROR_INGEST_ORIGIN);
-  const uploadsBucket = configuredOrigin(process.env.UPLOADS_BUCKET_ORIGIN);
-  const scriptSources = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"];
-  if (process.env.NODE_ENV === "development") scriptSources.push("'unsafe-eval'");
-
-  return [
-    "default-src 'self'",
-    `script-src ${scriptSources.join(" ")}`,
-    `style-src 'self' 'nonce-${nonce}'`,
-    `img-src 'self' data: blob:${imageCdn ? ` ${imageCdn}` : ""}`,
-    `connect-src 'self'${errorIngest ? ` ${errorIngest}` : ""}${uploadsBucket ? ` ${uploadsBucket}` : ""}`,
-    "font-src 'self'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join("; ");
-}
 
 // Same rule as the API's RequestContextMiddleware, so an id accepted here is accepted there.
 const REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 
 export function middleware(request: NextRequest) {
   const nonce = btoa(crypto.randomUUID());
-  const contentSecurityPolicy = buildContentSecurityPolicy(nonce);
+  const contentSecurityPolicy = buildContentSecurityPolicy({
+    nonce,
+    development: process.env.NODE_ENV === "development",
+    imageCdnOrigin: process.env.IMAGE_CDN_ORIGIN,
+    errorIngestOrigin: process.env.ERROR_INGEST_ORIGIN,
+    uploadsBucketOrigin: process.env.UPLOADS_BUCKET_ORIGIN,
+  });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);

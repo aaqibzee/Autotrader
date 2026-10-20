@@ -53,9 +53,7 @@ as_app() { sudo -u autotrader -H "$@"; }
 # --- 2. Build (nothing live has changed yet; failure here is harmless) --------
 as_app bash -c "cd '$release/backend' && uv sync --frozen --no-dev"
 as_app bash -c "cd '$release/web' && npm ci --no-audit --no-fund \
-  && NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 npm run build \
-  && cp -r .next/static .next/standalone/.next/static \
-  && if [ -d public ]; then cp -r public .next/standalone/public; fi"
+  && NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 npm run build:standalone"
 
 # --- 3. Migrate as the DDL role ---------------------------------------------
 log "applying migrations"

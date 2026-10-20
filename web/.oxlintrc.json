@@ -23,6 +23,36 @@
       "rules": {
         "import/namespace": "off"
       }
+    },
+    {
+      "files": [
+        "e2e/**/*.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@playwright/test",
+                "importNames": [
+                  "test",
+                  "expect"
+                ],
+                "message": "Import test/expect from ./fixtures: it fails tests on CSP violations (Feature 03 slice 3.2)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "e2e/fixtures.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
     }
   ]
 }
