@@ -62,6 +62,13 @@ log "applying migrations"
 as_app bash -c "set -a; . /etc/autotrader/migrate.env; set +a; \
   cd '$release/backend' && DATABASE_URL=\"\$MIGRATE_DATABASE_URL\" .venv/bin/alembic upgrade head"
 
+# Reference data, not demo data: every environment needs it (Feature 02 §1). DML only,
+# so it runs as the app role. Idempotent, never deletes, and serialised by an advisory
+# lock, so a failed deploy can simply be re-run. The old release never reads new rows.
+log "loading vehicle taxonomy"
+as_app bash -c "set -a; . /etc/autotrader/autotrader.env; set +a; \
+  cd '$release/backend' && .venv/bin/python -m scripts.load_taxonomy"
+
 # --- 4. Units, switch, restart ------------------------------------------------
 install -m 0644 "$release"/ops/systemd/autotrader-*.service "$release"/ops/systemd/autotrader.target \
   /etc/systemd/system/

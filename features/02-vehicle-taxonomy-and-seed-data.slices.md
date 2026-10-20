@@ -11,7 +11,7 @@ amendments below and per-slice verification).
 | # | Slice | Est. | Depends on | Status |
 |---|---|---|---|---|
 | 2.1 | Model conventions, enum/CHECK tooling, taxonomy schema | 1.5 h | — | Done (2026-10-19) |
-| 2.2 | Taxonomy data, loader and alias resolver | 2 h | 2.1 | Not Started |
+| 2.2 | Taxonomy data, loader and alias resolver | 2 h | 2.1 | Done (2026-10-20) |
 | 2.3 | Postcode-district dataset and lookup | 1.5 h | — | Not Started |
 | 2.4 | `Dealer` core and `Listing` schema | 2 h | 2.1 | Not Started |
 | 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Not Started |
@@ -61,6 +61,18 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    that package now reaches into `app.modules`, only Alembic imports the package itself:
    `app.core` imports platform models by submodule (`app.models.feature_flag`), or the
    "Core does not depend on domain modules" contract breaks (found in 2.1).
+- **A9.** **One lookup normal form, enforced by the database.** "Upper-case, collapse spaces
+   and hyphens" (2.2) could not make `Volks wagen` equal `VOLKSWAGEN`. The normal form is:
+   strip accents, spell `&`/`+` as `AND`/`PLUS` (so `Ka+` is not `Ka`), upper-case, keep
+   only `A-Z0-9`. Aliases are stored in it and the CHECK is now `alias ~ '^[A-Z0-9]+$'`
+   (`ck_*_alias_normalised`, replacing 2.1's upper-case check). The loader also stores every
+   make's and model's own name and slug as aliases, so the resolvers are one indexed
+   lookup rather than name, then slug, then alias, and the alias tables are owned
+   entirely by the loader (found in 2.2).
+- **A10.** **Slugs are an explicit CSV column, never derived at load time.** Deriving them
+   from `name` would turn every rename into a slug change. A "slug change" is detected
+   as a row whose slug disappears while a new slug arrives with the same normalised name
+   (within the make, for models), and the whole load is rejected (found in 2.2).
 - **A8.** **Hybrids follow the petrol ULEZ rule.** Design §6 said "everything else `false`",
    which would mark every hybrid non-compliant (a 2020 Prius is compliant). UK hybrids
    and plug-in hybrids are overwhelmingly petrol-electric, so `hybrid` and
@@ -162,6 +174,35 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
   `"MERCEDES-BENZ"` and `"Mercedes Benz"` too.
 - Two loads started concurrently both succeed and the result equals a single load.
 - The real CLI runs against the test database.
+
+**Notes (done 2026-10-20):**
+- Data: 50 makes, 546 models (discontinued models kept: used market), 60 explicit
+  aliases; 656 alias rows once names and slugs are added. Real CLI: first run inserted
+  596 rows, second run 0 inserted / 0 updated / 596 unchanged.
+- Module split: `naming.py` (pure `slugify`, `normalise_lookup`), `dataset.py` (CSV
+  rows, reading, `validate_taxonomy`; no database, so the CSV data-quality tests need
+  none), `services.py` (loader, resolvers, and re-exports of `slugify`, the only entry
+  point other modules may import). Advisory-lock keys live in one enum,
+  `app/db/locks.py`, so 2.7's seed lock cannot reuse a number by accident.
+- Resolvers return only *active* rows: a deactivated make or model keeps its id for
+  existing references but is no longer offered for new lookups. Its aliases are removed.
+- Concurrency is proven both ways: with the lock, the second loader is observed
+  waiting in `pg_locks` and the result equals a single load; with the lock stubbed out
+  and both loaders forced past the read, exactly one fails with a unique violation.
+- New rows must use `slugify(name)` as their slug (data-quality test); a renamed row
+  goes in `RENAMED_SLUGS` in `tests/test_taxonomy_data.py` (rule in
+  `backend/data/taxonomy/README.md`).
+- `deploy.sh` runs the loader after migrations as the app role (DML only), before the
+  traffic switch; the previous release never reads the new rows.
+- **Follow-up (Feature 05):** DVLA-style model strings carry the trim
+  (`GOLF MATCH TSI`) and will not resolve. Feature 05 logs unmatched lookups as planned
+  and may want a longest-prefix fallback.
+- **Follow-up (later, low risk):** "one alias, one model within a make" is enforced by
+  the loader's validation, not the database (`model_aliases` has no `make_id`). Enforcing
+  it there needs a denormalised `make_id` plus a composite FK. Revisit if anything other
+  than the loader ever writes aliases.
+- gitleaks could not run locally (the pre-commit environment fails on an unrelated
+  hook's pinned revision); CI's pre-commit job covers it.
 
 ---
 

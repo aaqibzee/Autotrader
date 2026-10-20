@@ -1,0 +1,547 @@
+make_slug,slug,name,body_types
+abarth,500,500,hatchback|convertible
+abarth,595,595,hatchback|convertible
+abarth,695,695,hatchback|convertible
+abarth,124-spider,124 Spider,convertible
+abarth,500e,500e,hatchback|convertible
+abarth,600e,600e,suv
+alfa-romeo,giulia,Giulia,saloon
+alfa-romeo,stelvio,Stelvio,suv
+alfa-romeo,tonale,Tonale,suv
+alfa-romeo,junior,Junior,suv
+alfa-romeo,giulietta,Giulietta,hatchback
+alfa-romeo,mito,MiTo,hatchback
+alfa-romeo,4c,4C,coupe|convertible
+alfa-romeo,159,159,saloon|estate
+alfa-romeo,brera,Brera,coupe
+alfa-romeo,spider,Spider,convertible
+aston-martin,db9,DB9,coupe|convertible
+aston-martin,db11,DB11,coupe|convertible
+aston-martin,db12,DB12,coupe|convertible
+aston-martin,dbs,DBS,coupe|convertible
+aston-martin,vantage,Vantage,coupe|convertible
+aston-martin,vanquish,Vanquish,coupe|convertible
+aston-martin,rapide,Rapide,saloon
+aston-martin,dbx,DBX,suv
+audi,a1,A1,hatchback
+audi,a3,A3,hatchback|saloon|convertible
+audi,a4,A4,saloon|estate|convertible
+audi,a5,A5,coupe|convertible|hatchback
+audi,a6,A6,saloon|estate
+audi,a7,A7,hatchback
+audi,a8,A8,saloon
+audi,q2,Q2,suv
+audi,q3,Q3,suv
+audi,q4-e-tron,Q4 e-tron,suv
+audi,q5,Q5,suv
+audi,q6-e-tron,Q6 e-tron,suv
+audi,q7,Q7,suv
+audi,q8,Q8,suv
+audi,q8-e-tron,Q8 e-tron,suv
+audi,e-tron-gt,e-tron GT,saloon
+audi,tt,TT,coupe|convertible
+audi,r8,R8,coupe|convertible
+audi,s3,S3,hatchback|saloon
+audi,rs3,RS3,hatchback|saloon
+audi,rs6,RS6,estate
+bentley,bentayga,Bentayga,suv
+bentley,continental-gt,Continental GT,coupe|convertible
+bentley,flying-spur,Flying Spur,saloon
+bentley,mulsanne,Mulsanne,saloon
+bmw,1-series,1 Series,hatchback
+bmw,2-series,2 Series,coupe|convertible
+bmw,2-series-active-tourer,2 Series Active Tourer,mpv
+bmw,2-series-gran-coupe,2 Series Gran Coupe,saloon
+bmw,3-series,3 Series,saloon|estate
+bmw,4-series,4 Series,coupe|convertible|hatchback
+bmw,5-series,5 Series,saloon|estate
+bmw,6-series,6 Series,coupe|convertible|hatchback
+bmw,7-series,7 Series,saloon
+bmw,8-series,8 Series,coupe|convertible|saloon
+bmw,x1,X1,suv
+bmw,x2,X2,suv
+bmw,x3,X3,suv
+bmw,x4,X4,suv
+bmw,x5,X5,suv
+bmw,x6,X6,suv
+bmw,x7,X7,suv
+bmw,z4,Z4,convertible
+bmw,i3,i3,hatchback
+bmw,i4,i4,hatchback
+bmw,i5,i5,saloon|estate
+bmw,i7,i7,saloon
+bmw,ix,iX,suv
+bmw,ix1,iX1,suv
+bmw,ix3,iX3,suv
+bmw,m2,M2,coupe
+bmw,m3,M3,saloon|estate
+bmw,m4,M4,coupe|convertible
+bmw,m5,M5,saloon
+byd,atto-2,Atto 2,suv
+byd,atto-3,Atto 3,suv
+byd,dolphin,Dolphin,hatchback
+byd,seal,Seal,saloon
+byd,seal-u,Seal U,suv
+byd,sealion-7,Sealion 7,suv
+chevrolet,spark,Spark,hatchback
+chevrolet,aveo,Aveo,hatchback|saloon
+chevrolet,cruze,Cruze,hatchback|saloon|estate
+chevrolet,captiva,Captiva,suv
+chevrolet,trax,Trax,suv
+chevrolet,orlando,Orlando,mpv
+chevrolet,camaro,Camaro,coupe|convertible
+chevrolet,corvette,Corvette,coupe|convertible
+citroen,c1,C1,hatchback
+citroen,c3,C3,hatchback
+citroen,c3-aircross,C3 Aircross,suv
+citroen,c4,C4,hatchback
+citroen,c4-x,C4 X,saloon
+citroen,c4-cactus,C4 Cactus,hatchback
+citroen,c4-spacetourer,C4 SpaceTourer,mpv
+citroen,grand-c4-spacetourer,Grand C4 SpaceTourer,mpv
+citroen,c5-aircross,C5 Aircross,suv
+citroen,c5-x,C5 X,estate
+citroen,berlingo,Berlingo,mpv|van
+citroen,spacetourer,SpaceTourer,mpv
+citroen,dispatch,Dispatch,van
+citroen,relay,Relay,van
+cupra,born,Born,hatchback
+cupra,formentor,Formentor,suv
+cupra,leon,Leon,hatchback|estate
+cupra,ateca,Ateca,suv
+cupra,tavascan,Tavascan,suv
+cupra,terramar,Terramar,suv
+dacia,sandero,Sandero,hatchback
+dacia,sandero-stepway,Sandero Stepway,hatchback
+dacia,duster,Duster,suv
+dacia,bigster,Bigster,suv
+dacia,jogger,Jogger,mpv|estate
+dacia,spring,Spring,hatchback
+dacia,logan-mcv,Logan MCV,estate
+ds-automobiles,ds-3,DS 3,suv
+ds-automobiles,ds-4,DS 4,hatchback
+ds-automobiles,ds-5,DS 5,hatchback
+ds-automobiles,ds-7,DS 7,suv
+ds-automobiles,ds-9,DS 9,saloon
+ferrari,458,458,coupe|convertible
+ferrari,488,488,coupe|convertible
+ferrari,f8-tributo,F8 Tributo,coupe
+ferrari,296-gtb,296 GTB,coupe
+ferrari,roma,Roma,coupe
+ferrari,portofino,Portofino,convertible
+ferrari,california,California,convertible
+ferrari,sf90-stradale,SF90 Stradale,coupe
+ferrari,812-superfast,812 Superfast,coupe
+ferrari,purosangue,Purosangue,suv
+fiat,500,500,hatchback|convertible
+fiat,500e,500e,hatchback|convertible
+fiat,500x,500X,suv
+fiat,500l,500L,mpv
+fiat,600,600,suv
+fiat,panda,Panda,hatchback
+fiat,punto,Punto,hatchback
+fiat,tipo,Tipo,hatchback|estate|saloon
+fiat,qubo,Qubo,mpv
+fiat,doblo,Doblo,mpv|van
+fiat,fiorino,Fiorino,van
+fiat,ducato,Ducato,van
+ford,ka,Ka,hatchback
+ford,ka-plus,Ka+,hatchback
+ford,fiesta,Fiesta,hatchback
+ford,focus,Focus,hatchback|estate
+ford,puma,Puma,suv
+ford,ecosport,EcoSport,suv
+ford,kuga,Kuga,suv
+ford,edge,Edge,suv
+ford,explorer,Explorer,suv
+ford,capri,Capri,suv
+ford,mondeo,Mondeo,saloon|estate|hatchback
+ford,mustang,Mustang,coupe|convertible
+ford,mustang-mach-e,Mustang Mach-E,suv
+ford,b-max,B-MAX,mpv
+ford,c-max,C-MAX,mpv
+ford,grand-c-max,Grand C-MAX,mpv
+ford,s-max,S-MAX,mpv
+ford,galaxy,Galaxy,mpv
+ford,tourneo-connect,Tourneo Connect,mpv
+ford,tourneo-custom,Tourneo Custom,mpv
+ford,ranger,Ranger,pickup
+ford,transit,Transit,van
+ford,transit-custom,Transit Custom,van
+ford,transit-connect,Transit Connect,van
+ford,transit-courier,Transit Courier,van
+genesis,g70,G70,saloon|estate
+genesis,g80,G80,saloon
+genesis,gv60,GV60,suv
+genesis,gv70,GV70,suv
+genesis,gv80,GV80,suv
+honda,jazz,Jazz,hatchback
+honda,civic,Civic,hatchback|saloon
+honda,e,e,hatchback
+honda,insight,Insight,hatchback
+honda,accord,Accord,saloon|estate
+honda,hr-v,HR-V,suv
+honda,zr-v,ZR-V,suv
+honda,cr-v,CR-V,suv
+honda,e-ny1,e:Ny1,suv
+honda,nsx,NSX,coupe
+honda,s2000,S2000,convertible
+hyundai,i10,i10,hatchback
+hyundai,i20,i20,hatchback
+hyundai,i30,i30,hatchback|estate
+hyundai,i40,i40,saloon|estate
+hyundai,inster,Inster,hatchback
+hyundai,ix20,ix20,mpv
+hyundai,ix35,ix35,suv
+hyundai,bayon,Bayon,suv
+hyundai,kona,Kona,suv
+hyundai,tucson,Tucson,suv
+hyundai,santa-fe,Santa Fe,suv
+hyundai,ioniq,Ioniq,hatchback
+hyundai,ioniq-5,Ioniq 5,suv
+hyundai,ioniq-6,Ioniq 6,saloon
+ineos,grenadier,Grenadier,suv|pickup
+jaguar,xe,XE,saloon
+jaguar,xf,XF,saloon|estate
+jaguar,xj,XJ,saloon
+jaguar,xk,XK,coupe|convertible
+jaguar,f-type,F-Type,coupe|convertible
+jaguar,e-pace,E-Pace,suv
+jaguar,f-pace,F-Pace,suv
+jaguar,i-pace,I-Pace,suv
+jeep,avenger,Avenger,suv
+jeep,renegade,Renegade,suv
+jeep,compass,Compass,suv
+jeep,cherokee,Cherokee,suv
+jeep,grand-cherokee,Grand Cherokee,suv
+jeep,wrangler,Wrangler,suv
+kia,picanto,Picanto,hatchback
+kia,rio,Rio,hatchback
+kia,ceed,Ceed,hatchback|estate
+kia,proceed,ProCeed,estate
+kia,xceed,XCeed,suv
+kia,stonic,Stonic,suv
+kia,soul,Soul,suv
+kia,niro,Niro,suv
+kia,sportage,Sportage,suv
+kia,sorento,Sorento,suv
+kia,ev3,EV3,suv
+kia,ev6,EV6,suv
+kia,ev9,EV9,suv
+kia,optima,Optima,saloon|estate
+kia,stinger,Stinger,hatchback
+kia,venga,Venga,mpv
+kia,carens,Carens,mpv
+lamborghini,huracan,Huracán,coupe|convertible
+lamborghini,aventador,Aventador,coupe|convertible
+lamborghini,revuelto,Revuelto,coupe
+lamborghini,urus,Urus,suv
+land-rover,defender,Defender,suv
+land-rover,discovery,Discovery,suv
+land-rover,discovery-sport,Discovery Sport,suv
+land-rover,freelander,Freelander,suv
+land-rover,range-rover,Range Rover,suv
+land-rover,range-rover-sport,Range Rover Sport,suv
+land-rover,range-rover-velar,Range Rover Velar,suv
+land-rover,range-rover-evoque,Range Rover Evoque,suv
+lexus,ct,CT,hatchback
+lexus,is,IS,saloon
+lexus,es,ES,saloon
+lexus,gs,GS,saloon
+lexus,ls,LS,saloon
+lexus,lbx,LBX,suv
+lexus,ux,UX,suv
+lexus,nx,NX,suv
+lexus,rx,RX,suv
+lexus,rz,RZ,suv
+lexus,rc,RC,coupe
+lexus,lc,LC,coupe|convertible
+lotus,elise,Elise,convertible
+lotus,exige,Exige,coupe
+lotus,evora,Evora,coupe
+lotus,emira,Emira,coupe
+lotus,eletre,Eletre,suv
+lotus,emeya,Emeya,saloon
+maserati,ghibli,Ghibli,saloon
+maserati,quattroporte,Quattroporte,saloon
+maserati,levante,Levante,suv
+maserati,grecale,Grecale,suv
+maserati,mc20,MC20,coupe|convertible
+maserati,granturismo,GranTurismo,coupe
+maserati,grancabrio,GranCabrio,convertible
+mazda,mazda2,Mazda2,hatchback
+mazda,mazda3,Mazda3,hatchback|saloon
+mazda,mazda6,Mazda6,saloon|estate
+mazda,cx-3,CX-3,suv
+mazda,cx-30,CX-30,suv
+mazda,cx-5,CX-5,suv
+mazda,cx-60,CX-60,suv
+mazda,cx-80,CX-80,suv
+mazda,mx-30,MX-30,suv
+mazda,mx-5,MX-5,convertible
+mclaren,570s,570S,coupe|convertible
+mclaren,600lt,600LT,coupe|convertible
+mclaren,720s,720S,coupe|convertible
+mclaren,750s,750S,coupe|convertible
+mclaren,artura,Artura,coupe|convertible
+mclaren,gt,GT,coupe
+mercedes-benz,a-class,A-Class,hatchback|saloon
+mercedes-benz,b-class,B-Class,mpv
+mercedes-benz,c-class,C-Class,saloon|estate|coupe|convertible
+mercedes-benz,e-class,E-Class,saloon|estate|coupe|convertible
+mercedes-benz,s-class,S-Class,saloon|coupe|convertible
+mercedes-benz,cla,CLA,saloon|estate
+mercedes-benz,cls,CLS,saloon
+mercedes-benz,gla,GLA,suv
+mercedes-benz,glb,GLB,suv
+mercedes-benz,glc,GLC,suv|coupe
+mercedes-benz,gle,GLE,suv|coupe
+mercedes-benz,gls,GLS,suv
+mercedes-benz,g-class,G-Class,suv
+mercedes-benz,m-class,M-Class,suv
+mercedes-benz,sl,SL,convertible
+mercedes-benz,slc,SLC,convertible
+mercedes-benz,slk,SLK,convertible
+mercedes-benz,amg-gt,AMG GT,coupe|convertible|hatchback
+mercedes-benz,eqa,EQA,suv
+mercedes-benz,eqb,EQB,suv
+mercedes-benz,eqc,EQC,suv
+mercedes-benz,eqe,EQE,saloon|suv
+mercedes-benz,eqs,EQS,saloon|suv
+mercedes-benz,v-class,V-Class,mpv
+mercedes-benz,citan,Citan,van
+mercedes-benz,vito,Vito,van
+mercedes-benz,sprinter,Sprinter,van
+mercedes-benz,x-class,X-Class,pickup
+mg,mg3,MG3,hatchback
+mg,mg4,MG4,hatchback
+mg,mg5,MG5,estate
+mg,mg6,MG6,hatchback|saloon
+mg,zs,ZS,suv
+mg,hs,HS,suv
+mg,gs,GS,suv
+mg,marvel-r,Marvel R,suv
+mg,cyberster,Cyberster,convertible
+mg,tf,TF,convertible
+mini,hatch,Hatch,hatchback
+mini,clubman,Clubman,estate
+mini,convertible,Convertible,convertible
+mini,coupe,Coupe,coupe
+mini,roadster,Roadster,convertible
+mini,countryman,Countryman,suv
+mini,paceman,Paceman,suv
+mini,aceman,Aceman,suv
+mitsubishi,mirage,Mirage,hatchback
+mitsubishi,colt,Colt,hatchback
+mitsubishi,i-miev,i-MiEV,hatchback
+mitsubishi,asx,ASX,suv
+mitsubishi,eclipse-cross,Eclipse Cross,suv
+mitsubishi,outlander,Outlander,suv
+mitsubishi,shogun,Shogun,suv
+mitsubishi,shogun-sport,Shogun Sport,suv
+mitsubishi,l200,L200,pickup
+nissan,micra,Micra,hatchback
+nissan,note,Note,hatchback|mpv
+nissan,pulsar,Pulsar,hatchback
+nissan,leaf,Leaf,hatchback
+nissan,juke,Juke,suv
+nissan,qashqai,Qashqai,suv
+nissan,qashqai-plus-2,Qashqai+2,suv
+nissan,x-trail,X-Trail,suv
+nissan,ariya,Ariya,suv
+nissan,pathfinder,Pathfinder,suv
+nissan,370z,370Z,coupe|convertible
+nissan,gt-r,GT-R,coupe
+nissan,navara,Navara,pickup
+nissan,e-nv200,e-NV200,mpv|van
+nissan,nv200,NV200,van
+nissan,townstar,Townstar,van|mpv
+nissan,primastar,Primastar,van
+peugeot,107,107,hatchback
+peugeot,108,108,hatchback
+peugeot,207,207,hatchback
+peugeot,208,208,hatchback
+peugeot,2008,2008,suv
+peugeot,308,308,hatchback|estate
+peugeot,3008,3008,suv
+peugeot,408,408,saloon
+peugeot,508,508,saloon|estate
+peugeot,5008,5008,suv
+peugeot,rcz,RCZ,coupe
+peugeot,rifter,Rifter,mpv
+peugeot,traveller,Traveller,mpv
+peugeot,partner,Partner,van
+peugeot,expert,Expert,van
+peugeot,boxer,Boxer,van
+polestar,2,2,saloon
+polestar,3,3,suv
+polestar,4,4,suv
+porsche,911,911,coupe|convertible
+porsche,718-boxster,718 Boxster,convertible
+porsche,718-cayman,718 Cayman,coupe
+porsche,macan,Macan,suv
+porsche,cayenne,Cayenne,suv
+porsche,panamera,Panamera,hatchback|estate
+porsche,taycan,Taycan,saloon|estate
+renault,twingo,Twingo,hatchback
+renault,zoe,Zoe,hatchback
+renault,clio,Clio,hatchback|estate
+renault,5,5,hatchback
+renault,megane,Megane,hatchback|estate|coupe
+renault,megane-e-tech,Megane E-Tech,hatchback
+renault,captur,Captur,suv
+renault,symbioz,Symbioz,suv
+renault,arkana,Arkana,suv
+renault,kadjar,Kadjar,suv
+renault,austral,Austral,suv
+renault,koleos,Koleos,suv
+renault,rafale,Rafale,suv
+renault,scenic,Scenic,mpv|suv
+renault,grand-scenic,Grand Scenic,mpv
+renault,kangoo,Kangoo,van|mpv
+renault,trafic,Trafic,van
+renault,master,Master,van
+rolls-royce,ghost,Ghost,saloon
+rolls-royce,phantom,Phantom,saloon
+rolls-royce,wraith,Wraith,coupe
+rolls-royce,dawn,Dawn,convertible
+rolls-royce,spectre,Spectre,coupe
+rolls-royce,cullinan,Cullinan,suv
+seat,mii,Mii,hatchback
+seat,ibiza,Ibiza,hatchback
+seat,leon,Leon,hatchback|estate
+seat,toledo,Toledo,hatchback
+seat,arona,Arona,suv
+seat,ateca,Ateca,suv
+seat,tarraco,Tarraco,suv
+seat,altea,Altea,mpv
+seat,alhambra,Alhambra,mpv
+skoda,citigo,Citigo,hatchback
+skoda,fabia,Fabia,hatchback|estate
+skoda,rapid,Rapid,hatchback
+skoda,scala,Scala,hatchback
+skoda,octavia,Octavia,hatchback|estate
+skoda,superb,Superb,hatchback|estate
+skoda,roomster,Roomster,mpv
+skoda,yeti,Yeti,suv
+skoda,kamiq,Kamiq,suv
+skoda,karoq,Karoq,suv
+skoda,kodiaq,Kodiaq,suv
+skoda,elroq,Elroq,suv
+skoda,enyaq,Enyaq,suv
+smart,fortwo,fortwo,coupe|convertible
+smart,forfour,forfour,hatchback
+smart,1,#1,suv
+smart,3,#3,suv
+ssangyong,tivoli,Tivoli,suv
+ssangyong,korando,Korando,suv
+ssangyong,torres,Torres,suv
+ssangyong,rexton,Rexton,suv
+ssangyong,musso,Musso,pickup
+subaru,impreza,Impreza,hatchback
+subaru,xv,XV,suv
+subaru,crosstrek,Crosstrek,suv
+subaru,forester,Forester,suv
+subaru,solterra,Solterra,suv
+subaru,outback,Outback,estate
+subaru,levorg,Levorg,estate
+subaru,brz,BRZ,coupe
+subaru,wrx-sti,WRX STI,saloon
+suzuki,alto,Alto,hatchback
+suzuki,celerio,Celerio,hatchback
+suzuki,ignis,Ignis,hatchback
+suzuki,swift,Swift,hatchback
+suzuki,baleno,Baleno,hatchback
+suzuki,sx4,SX4,hatchback
+suzuki,swace,Swace,estate
+suzuki,vitara,Vitara,suv
+suzuki,s-cross,S-Cross,suv
+suzuki,jimny,Jimny,suv
+suzuki,across,Across,suv
+tesla,model-3,Model 3,saloon
+tesla,model-y,Model Y,suv
+tesla,model-s,Model S,hatchback
+tesla,model-x,Model X,suv
+toyota,aygo,Aygo,hatchback
+toyota,aygo-x,Aygo X,hatchback
+toyota,yaris,Yaris,hatchback
+toyota,yaris-cross,Yaris Cross,suv
+toyota,auris,Auris,hatchback|estate
+toyota,corolla,Corolla,hatchback|estate|saloon
+toyota,prius,Prius,hatchback
+toyota,prius-plus,Prius+,mpv
+toyota,verso,Verso,mpv
+toyota,avensis,Avensis,saloon|estate
+toyota,camry,Camry,saloon
+toyota,mirai,Mirai,saloon
+toyota,c-hr,C-HR,suv
+toyota,rav4,RAV4,suv
+toyota,bz4x,bZ4X,suv
+toyota,highlander,Highlander,suv
+toyota,land-cruiser,Land Cruiser,suv
+toyota,gt86,GT86,coupe
+toyota,gr86,GR86,coupe
+toyota,supra,Supra,coupe
+toyota,hilux,Hilux,pickup
+toyota,proace,Proace,van
+toyota,proace-city,Proace City,van|mpv
+vauxhall,adam,Adam,hatchback
+vauxhall,agila,Agila,hatchback
+vauxhall,viva,Viva,hatchback
+vauxhall,corsa,Corsa,hatchback
+vauxhall,astra,Astra,hatchback|estate
+vauxhall,insignia,Insignia,hatchback|estate
+vauxhall,cascada,Cascada,convertible
+vauxhall,meriva,Meriva,mpv
+vauxhall,zafira,Zafira,mpv
+vauxhall,mokka,Mokka,suv
+vauxhall,crossland,Crossland,suv
+vauxhall,frontera,Frontera,suv
+vauxhall,grandland,Grandland,suv
+vauxhall,antara,Antara,suv
+vauxhall,combo,Combo,van|mpv
+vauxhall,vivaro,Vivaro,van
+vauxhall,movano,Movano,van
+volkswagen,up,up!,hatchback
+volkswagen,polo,Polo,hatchback
+volkswagen,golf,Golf,hatchback|estate
+volkswagen,beetle,Beetle,hatchback|convertible
+volkswagen,scirocco,Scirocco,coupe
+volkswagen,jetta,Jetta,saloon
+volkswagen,passat,Passat,saloon|estate
+volkswagen,cc,CC,saloon
+volkswagen,arteon,Arteon,hatchback|estate
+volkswagen,t-cross,T-Cross,suv
+volkswagen,taigo,Taigo,suv
+volkswagen,t-roc,T-Roc,suv|convertible
+volkswagen,tiguan,Tiguan,suv
+volkswagen,tiguan-allspace,Tiguan Allspace,suv
+volkswagen,touareg,Touareg,suv
+volkswagen,touran,Touran,mpv
+volkswagen,sharan,Sharan,mpv
+volkswagen,id-3,ID.3,hatchback
+volkswagen,id-4,ID.4,suv
+volkswagen,id-5,ID.5,suv
+volkswagen,id-7,ID.7,hatchback|estate
+volkswagen,id-buzz,ID. Buzz,mpv|van
+volkswagen,caddy,Caddy,van|mpv
+volkswagen,transporter,Transporter,van
+volkswagen,caravelle,Caravelle,mpv
+volkswagen,california,California,mpv
+volkswagen,crafter,Crafter,van
+volkswagen,amarok,Amarok,pickup
+volvo,v40,V40,hatchback
+volvo,s60,S60,saloon
+volvo,s90,S90,saloon
+volvo,v60,V60,estate
+volvo,v70,V70,estate
+volvo,v90,V90,estate
+volvo,xc70,XC70,estate
+volvo,xc40,XC40,suv
+volvo,xc60,XC60,suv
+volvo,xc90,XC90,suv
+volvo,c40,C40,suv
+volvo,ec40,EC40,suv
+volvo,ex30,EX30,suv
+volvo,ex40,EX40,suv
+volvo,ex90,EX90,suv

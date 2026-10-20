@@ -1,0 +1,51 @@
+slug,name,is_popular
+abarth,Abarth,false
+alfa-romeo,Alfa Romeo,false
+aston-martin,Aston Martin,false
+audi,Audi,true
+bentley,Bentley,false
+bmw,BMW,true
+byd,BYD,false
+chevrolet,Chevrolet,false
+citroen,Citroën,false
+cupra,Cupra,false
+dacia,Dacia,false
+ds-automobiles,DS Automobiles,false
+ferrari,Ferrari,false
+fiat,Fiat,false
+ford,Ford,true
+genesis,Genesis,false
+honda,Honda,false
+hyundai,Hyundai,true
+ineos,Ineos,false
+jaguar,Jaguar,false
+jeep,Jeep,false
+kia,Kia,true
+lamborghini,Lamborghini,false
+land-rover,Land Rover,false
+lexus,Lexus,false
+lotus,Lotus,false
+maserati,Maserati,false
+mazda,Mazda,false
+mclaren,McLaren,false
+mercedes-benz,Mercedes-Benz,true
+mg,MG,false
+mini,MINI,false
+mitsubishi,Mitsubishi,false
+nissan,Nissan,true
+peugeot,Peugeot,true
+polestar,Polestar,false
+porsche,Porsche,false
+renault,Renault,false
+rolls-royce,Rolls-Royce,false
+seat,SEAT,false
+skoda,Škoda,true
+smart,smart,false
+ssangyong,SsangYong,false
+subaru,Subaru,false
+suzuki,Suzuki,false
+tesla,Tesla,false
+toyota,Toyota,true
+vauxhall,Vauxhall,true
+volkswagen,Volkswagen,true
+volvo,Volvo,false

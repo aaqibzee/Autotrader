@@ -29,11 +29,11 @@ against real volume rather than an empty table.
 |---|---|---|
 | `Make` | `id`, `name`, `slug`, `is_popular`, `is_active` | ~45 makes sold in the UK. `slug` is used in SEO URLs (`/cars/volkswagen`). |
 | `Model` | `id`, `make_id`, `name`, `slug`, `body_types[]`, `is_active` | ~450 models. Unique `(make_id, slug)`. |
-| `MakeAlias` / `ModelAlias` | `alias` (normalised upper-case), `make_id` / `model_id` | Maps external strings ("VW", "VOLKSWAGEN", "MERCEDES-BENZ") onto our taxonomy. Used by Feature 05's plate lookup and any later import. |
+| `MakeAlias` / `ModelAlias` | `alias` (lookup normal form: accents stripped, `&`/`+` spelled out, upper-case `A-Z0-9` only; CHECK-enforced, A9), `make_id` / `model_id` | Maps external strings ("VW", "Volks wagen", "MERCEDES-BENZ") onto our taxonomy. Owned by the loader, which also stores each row's own name and slug here, so lookup is one query. Used by Feature 05's plate lookup and any later import. |
 
 - Source of truth: hand-curated CSVs in `backend/data/taxonomy/` (`makes.csv`, `models.csv`, `aliases.csv`), reviewed in PRs. Make and model names are factual data, not a licensed product.
 - **`uv run python -m scripts.load_taxonomy`** upserts by slug, is idempotent (a second run changes nothing), and **never deletes**: a row removed from the CSV is set `is_active = false`, so listings, saved searches and SEO URLs that reference it keep working. It runs in every environment as a deploy step after migrations (Feature 01 §15), inside a `pg_advisory_xact_lock` so concurrent runs serialise (A5). It is separate from the demo seed, which production may or may not run.
-- **Slugs are immutable once created.** A rename changes `name` only. Slugs appear in SEO URLs (Feature 13) and shared links; ids, not slugs, are what saved searches store (Feature 07).
+- **Slugs are immutable once created.** They are an explicit CSV column, never derived at load time (A10), and the loader rejects a load that would move a row to a new slug. A rename changes `name` only. Slugs appear in SEO URLs (Feature 13) and shared links; ids, not slugs, are what saved searches store (Feature 07).
 - **Enumerations are `text` columns with named CHECK constraints** (`ck_listing_fuel_type`, …), backed by one Python `StrEnum` each, not native Postgres enums:
   - `BodyType`: hatchback, saloon, estate, suv, coupe, convertible, mpv, pickup, van
   - `FuelType`: petrol, diesel, hybrid, plug_in_hybrid, electric, other

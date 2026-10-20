@@ -22,16 +22,17 @@ from app.modules.taxonomy.enums import BodyType
 # Slugs appear in SEO URLs (Feature 13) and are immutable once created, so the database
 # refuses anything that is not already in URL form.
 SLUG_PATTERN = r'^[a-z0-9]+(-[a-z0-9]+)*$'
+# The exact output of `naming.normalise_lookup`. Resolvers reduce their input to that form
+# before looking an alias up, so an alias stored in any other form could never match.
+ALIAS_PATTERN = r'^[A-Z0-9]+$'
 
 
 def _slug_format() -> CheckConstraint:
     return CheckConstraint(f"slug ~ '{SLUG_PATTERN}'", name='slug_format')
 
 
-def _alias_upper_case() -> CheckConstraint:
-    # Resolvers upper-case their input before looking an alias up, so an alias stored in
-    # any other case could never match.
-    return CheckConstraint('alias = upper(alias)', name='alias_upper_case')
+def _alias_normalised() -> CheckConstraint:
+    return CheckConstraint(f"alias ~ '{ALIAS_PATTERN}'", name='alias_normalised')
 
 
 class Make(TimestampMixin, Base):
@@ -72,7 +73,7 @@ class VehicleModel(TimestampMixin, Base):
 
 class MakeAlias(TimestampMixin, Base):
     __tablename__ = 'make_aliases'
-    __table_args__ = (_alias_upper_case(),)
+    __table_args__ = (_alias_normalised(),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
     # One alias, one make: an ambiguous alias would make resolution order-dependent.
@@ -84,7 +85,7 @@ class MakeAlias(TimestampMixin, Base):
 
 class ModelAlias(TimestampMixin, Base):
     __tablename__ = 'model_aliases'
-    __table_args__ = (UniqueConstraint('model_id', 'alias'), _alias_upper_case())
+    __table_args__ = (UniqueConstraint('model_id', 'alias'), _alias_normalised())
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
     alias: Mapped[str] = mapped_column(String(80), nullable=False)

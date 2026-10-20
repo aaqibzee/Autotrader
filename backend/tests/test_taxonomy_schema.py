@@ -123,7 +123,7 @@ def test_well_formed_taxonomy_rows_are_accepted(connection: Connection) -> None:
     make_id = _insert_make(connection, 'alfa-romeo')
     model_id = _insert_model(connection, make_id, 'giulia', ['saloon', 'estate'])
     _insert_make_alias(connection, make_id, 'ALFA')
-    _insert_model_alias(connection, model_id, 'GIULIA QV')
+    _insert_model_alias(connection, model_id, 'GIULIAQV')
     count = connection.execute(text('SELECT count(*) FROM vehicle_models')).scalar_one()
     assert count >= 1
 
@@ -141,8 +141,11 @@ def test_well_formed_taxonomy_rows_are_accepted(connection: Connection) -> None:
         ('duplicate model slug within a make', 'uq_vehicle_models_make_id_slug'),
         ('unknown body type', 'ck_vehicle_models_body_types'),
         ('one bad body type among good ones', 'ck_vehicle_models_body_types'),
-        ('lower-case make alias', 'ck_make_aliases_alias_upper_case'),
-        ('mixed-case model alias', 'ck_model_aliases_alias_upper_case'),
+        ('lower-case make alias', 'ck_make_aliases_alias_normalised'),
+        ('make alias with a space', 'ck_make_aliases_alias_normalised'),
+        ('make alias with a hyphen', 'ck_make_aliases_alias_normalised'),
+        ('mixed-case model alias', 'ck_model_aliases_alias_normalised'),
+        ('model alias with an accent', 'ck_model_aliases_alias_normalised'),
         ('make alias mapped twice', 'uq_make_aliases_alias'),
     ],
 )
@@ -151,7 +154,7 @@ def test_database_refuses_malformed_taxonomy_rows(
 ) -> None:
     make_id = _insert_make(connection, 'ford')
     model_id = _insert_model(connection, make_id, 'fiesta')
-    _insert_make_alias(connection, make_id, 'FORD MOTOR')
+    _insert_make_alias(connection, make_id, 'FORDMOTOR')
     other_make_id = _insert_make(connection, 'vauxhall')
 
     violations = {
@@ -167,10 +170,13 @@ def test_database_refuses_malformed_taxonomy_rows(
         'one bad body type among good ones': lambda: _insert_model(
             connection, make_id, 'puma', ['suv', 'hatchback', 'Hatchback']
         ),
-        'lower-case make alias': lambda: _insert_make_alias(connection, make_id, 'ford uk'),
-        'mixed-case model alias': lambda: _insert_model_alias(connection, model_id, 'Fiesta ST'),
+        'lower-case make alias': lambda: _insert_make_alias(connection, make_id, 'forduk'),
+        'make alias with a space': lambda: _insert_make_alias(connection, make_id, 'FORD UK'),
+        'make alias with a hyphen': lambda: _insert_make_alias(connection, make_id, 'FORD-UK'),
+        'mixed-case model alias': lambda: _insert_model_alias(connection, model_id, 'FiestaST'),
+        'model alias with an accent': lambda: _insert_model_alias(connection, model_id, 'FIËSTA'),
         'make alias mapped twice': lambda: _insert_make_alias(
-            connection, other_make_id, 'FORD MOTOR'
+            connection, other_make_id, 'FORDMOTOR'
         ),
     }
 

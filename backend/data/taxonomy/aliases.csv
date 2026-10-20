@@ -1,0 +1,61 @@
+make_slug,model_slug,alias
+alfa-romeo,,Alfa
+aston-martin,,Aston
+byd,,BYD Auto
+ds-automobiles,,DS
+ineos,,Ineos Automotive
+mercedes-benz,,Mercedes
+mercedes-benz,,Mercedes-AMG
+mg,,MG Motor
+mg,,MG Motor UK
+mini,,BMW MINI
+ssangyong,,KGM
+ssangyong,,KGM Mobility
+vauxhall,,Opel
+volkswagen,,VW
+citroen,c4,e-C4
+citroen,berlingo,e-Berlingo
+citroen,c4-spacetourer,C4 Picasso
+citroen,grand-c4-spacetourer,Grand C4 Picasso
+ds-automobiles,ds-3,DS3 Crossback
+ds-automobiles,ds-7,DS7 Crossback
+fiat,500e,500 Electric
+ford,mustang-mach-e,Mach-E
+honda,e,Honda e
+hyundai,ioniq,Ioniq Electric
+hyundai,kona,Kona Electric
+kia,niro,e-Niro
+kia,soul,Soul EV
+land-rover,discovery,Discovery 5
+land-rover,freelander,Freelander 2
+land-rover,range-rover-evoque,Evoque
+land-rover,range-rover-velar,Velar
+mazda,mazda2,2
+mazda,mazda3,3
+mazda,mazda6,6
+mercedes-benz,g-class,G Wagon
+mercedes-benz,m-class,ML
+mg,mg3,3
+mg,mg4,4
+mg,mg5,5
+mg,zs,ZS EV
+mini,hatch,Cooper
+mini,hatch,Cooper S
+mini,hatch,One
+peugeot,208,e-208
+peugeot,2008,e-2008
+porsche,718-boxster,Boxster
+porsche,718-cayman,Cayman
+renault,5,R5
+renault,5,5 E-Tech
+toyota,supra,GR Supra
+toyota,yaris,GR Yaris
+vauxhall,corsa,Corsa-e
+vauxhall,crossland,Crossland X
+vauxhall,grandland,Grandland X
+vauxhall,mokka,Mokka X
+vauxhall,mokka,Mokka-e
+vauxhall,zafira,Zafira Tourer
+vauxhall,zafira,Zafira Life
+volkswagen,golf,e-Golf
+volkswagen,up,e-up!
