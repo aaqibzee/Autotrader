@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session
 
 from app.db.uuid7 import uuid7
@@ -43,9 +43,9 @@ def insert_dealers(session: Session, rows: Sequence[dict[str, Any]]) -> list[UUI
     return ids
 
 
-def demo_dealers(session: Session) -> list[DealerLocation]:
-    """Every demo dealer, sorted by slug."""
-    rows = session.execute(
+def demo_dealers(session: Session, region: str | None = None) -> list[DealerLocation]:
+    """Every demo dealer (in `region`, a GSS code, if given), sorted by slug."""
+    query = (
         select(
             Dealer.id,
             Dealer.slug,
@@ -58,4 +58,23 @@ def demo_dealers(session: Session) -> list[DealerLocation]:
         .where(Dealer.is_demo)
         .order_by(Dealer.slug)
     )
-    return [DealerLocation(*row) for row in rows]
+    if region is not None:
+        query = query.where(Dealer.region_code == region)
+    return [DealerLocation(*row) for row in session.execute(query)]
+
+
+def dealer_slugs(session: Session) -> frozenset[str]:
+    """Every dealer slug in use, real or demo (slugs are unique across both)."""
+    return frozenset(session.scalars(select(Dealer.slug)))
+
+
+def delete_demo_dealers(session: Session, region: str | None = None) -> int:
+    """Hard-delete demo dealers (in `region` if given); returns how many.
+
+    Only `is_demo` rows: the composite `(dealer_id, is_demo)` FK means a demo dealer can
+    only own demo listings, and `ON DELETE CASCADE` removes them (design §9).
+    """
+    statement = delete(Dealer).where(Dealer.is_demo)
+    if region is not None:
+        statement = statement.where(Dealer.region_code == region)
+    return len(session.execute(statement.returning(Dealer.id)).all())

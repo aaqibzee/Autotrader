@@ -9,14 +9,16 @@ from app.modules.geo.districts import (
     outward_code,
     region_for_postcode,
 )
-from app.modules.geo.enums import REGION_NAMES, Region
+from app.modules.geo.enums import REGION_NAMES, REGION_SHORT_CODES, Region, parse_region
 
 __all__ = [
     'REGION_NAMES',
+    'REGION_SHORT_CODES',
     'District',
     'Region',
     'all_districts',
     'district_for',
     'outward_code',
+    'parse_region',
     'region_for_postcode',
 ]

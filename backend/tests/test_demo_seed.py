@@ -12,6 +12,7 @@ import statistics
 from collections import defaultdict
 from collections.abc import Generator
 from datetime import UTC, date, datetime
+from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
 import pytest
@@ -73,7 +74,7 @@ def _catalogue() -> list[CatalogueModel]:
 CATALOGUE = _catalogue()
 
 
-def _generate(listings: int, random_seed: int = 42) -> DemoDataset:
+def _generate(listings: int, random_seed: int = 42, **kwargs: Any) -> DemoDataset:
     return generate(
         listings=listings,
         random_seed=random_seed,
@@ -81,6 +82,7 @@ def _generate(listings: int, random_seed: int = 42) -> DemoDataset:
         models=CATALOGUE,
         today=TODAY,
         now=NOW,
+        **kwargs,
     )
 
 

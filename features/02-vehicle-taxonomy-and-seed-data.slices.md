@@ -17,7 +17,7 @@ amendments below and per-slice verification).
 | 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Done (2026-10-20) |
 | 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Done (2026-10-20) |
 | 2.7 | Deterministic demo seed generator | 2.5 h | 2.2, 2.3, 2.6 | Done (2026-10-20) |
-| 2.8 | Seed safety: reset, region scope, production controls | 1.5 h | 2.7 | Not Started |
+| 2.8 | Seed safety: reset, region scope, production controls | 1.5 h | 2.7 | Done (2026-10-20) |
 | 2.9 | Scale proof, CI wiring, docs | 1.5 h | 2.8 | Not Started |
 
 Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time before 2.5.
@@ -127,6 +127,16 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    listing that was never held has been visible since it was published. `seed_demo`
    also refuses to run while demo dealers exist ("remove it with --reset first"), checked
    under the advisory lock, rather than failing on a slug collision (found in 2.7).
+- **A17.** **Regions are seeded independently.** Turning demo on region by region (design
+   §9) means seeding region B while region A already holds demo data. With the same
+   random seed, B's first dealer name equals A's and would hit the unique slug. So
+   `generate()` takes the slugs and demo plates already in the database
+   (`taken_slugs`, `taken_plates`) and avoids them; it stays pure and deterministic for
+   the same inputs. The "demo data already exists" refusal is scoped to `--region` when
+   one is given (an unscoped run still refuses if any demo data exists). `--reset` is its
+   own run and takes no size flags. `--region` accepts a short code (`NW`, `LON`,
+   `SCO`, …, in `geo.enums.REGION_SHORT_CODES`), a GSS code or a region name. A
+   production refusal exits 2, before any database session opens (found in 2.8).
 
 ---
 
@@ -558,6 +568,28 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 - With `ENVIRONMENT=production`: missing `--region` or `--confirm-production` exits
   non-zero before touching the database; `--profile perf` exits non-zero.
 - Reset is idempotent (second run deletes 0).
+
+**Notes (done 2026-10-20):**
+- `reset_demo()` (under the seed lock) counts the scoped demo listings, then
+  `dealers.services.delete_demo_dealers()` deletes `WHERE is_demo [AND region_code = R]`
+  and the cascade removes the listings. The composite `(dealer_id, is_demo)` FK is what
+  stops a demo dealer owning a real listing, so the delete cannot reach a real row.
+- `production_refusal()` is a pure function; the CLI checks it before `SyncSessionLocal`
+  is touched. The tests swap the session factory for one that raises, and a confirmed
+  regional run proves the stand-in does catch a session (negative proof).
+- Every run, including refusals and failures, logs one JSON line with `operator`
+  (`getpass.getuser()`, `unknown` if the OS has none), `host`, `environment`, `flags`
+  and the counts.
+- Probes (each made a test fail): reset without `is_demo`; reset without the region
+  filter; no `taken_slugs`; no `taken_plates`; CLI skipping the refusal; the existence
+  check ignoring the region.
+- Real CLI run on the test stack: NW 2,000 listings (25 dealers, 2.3 s), then Scotland
+  1,000 with the same seed (13 dealers); a second NW run and an unscoped run both refuse;
+  `--reset --region north-west` deletes 25 / 2,000, again deletes 0 / 0, and an unscoped
+  reset removes Scotland's 13 / 1,000.
+- Not tested end to end: a real `ENVIRONMENT=production` process. `Settings()` refuses
+  the local placeholder secrets in production, so the refusal path is tested by patching
+  `settings.ENVIRONMENT`.
 
 ---
 

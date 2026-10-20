@@ -1,6 +1,6 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A16) applied below.
+**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A17) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
 **Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)
@@ -129,8 +129,8 @@ No GIN on `specs` until a spec filter exists (§4 rule).
 | `--listings N` (default 5,000) | ~60 demo dealers (one per ~80 listings), spread across real UK postcode districts. Names come from neutral word lists and locations are district centroids with the outward code only, never a real full postcode (A2) |
 | `--random-seed S` (default 42) | Fully deterministic: the same seed and N produce an identical dataset (performance tests compare like with like) |
 | `--profile perf` | 50,000 listings for Feature 07's budgets. **Refused when `ENVIRONMENT=production`.** |
-| `--region R` | Only create (or with `--reset`, only remove) demo dealers in ONS region `R` |
-| `--reset` | Removes **only** `is_demo = true` dealers and listings (in `--region` if given). Never touches real rows. |
+| `--region R` | Only create (or with `--reset`, only remove) demo dealers in ONS region `R` (short code such as `NW`, GSS code or name). Other regions' demo data does not block a regional seed; new dealers and plates avoid the ones already stored (A17) |
+| `--reset` | Removes **only** `is_demo = true` dealers and listings (in `--region` if given). Never touches real rows. A run of its own: takes no size flags; idempotent. |
 
 - **Geography without network:** a bundled postcode-district centroid CSV (`backend/data/geo/postcode_districts.csv`: outward code, lat, lng, region code, area name), derived by `scripts/build_postcode_districts.py` from the ONS Postcode Directory as the median coordinate of live, small-user geographic postcodes per outward code. ONSPD is OGL but contains Royal Mail, OS and ONS IPR, so the attribution text ships in `backend/data/geo/README.md` (A3). The file covers Great Britain only: Northern Ireland postcodes are not OGL, so `BT` codes get their region by rule but no centroid (A11). Feature 04 and Feature 07 reuse it as the offline fallback when postcodes.io is unavailable.
 - Make/model/year mix weighted toward the real UK used market (high counts of Ford, Vauxhall, VW, BMW, Mercedes, Audi, Toyota, Nissan, Kia, Hyundai)

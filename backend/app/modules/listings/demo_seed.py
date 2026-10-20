@@ -9,6 +9,11 @@ the real derivation path (`derive.py`, `stamp_listed_at`), then fails the run if
 Demo data must not look real (playbook §4): plates start with `Z` (A1), dealer names
 contain "Demo" and come from neutral word lists, locations are district centroids with
 the outward code only (A2), and every description says the car is not for sale.
+
+Region scope and reset (slice 2.8, design §9): a region can be seeded while other regions
+already hold demo data, and `reset_demo()` hard-deletes demo dealers (their listings
+cascade). `production_refusal()` is the production rule the CLI applies before it opens a
+database session.
 """
 
 from __future__ import annotations
@@ -30,8 +35,13 @@ from sqlalchemy.orm import Session
 
 from app.db.locks import AdvisoryLock, hold_advisory_lock
 from app.db.uuid7 import uuid7
-from app.modules.dealers.services import demo_dealers, insert_dealers
-from app.modules.geo.services import District, Region, all_districts
+from app.modules.dealers.services import (
+    dealer_slugs,
+    delete_demo_dealers,
+    demo_dealers,
+    insert_dealers,
+)
+from app.modules.geo.services import REGION_NAMES, District, Region, all_districts
 from app.modules.listings.derive import build_title, derive_ulez, normalise_vrm
 from app.modules.listings.enums import ListingStatus
 from app.modules.listings.models import Listing
@@ -205,6 +215,13 @@ class SeedReport:
     mismatches: list[InvariantMismatch] = field(default_factory=list, repr=False)
 
 
+@dataclass(frozen=True)
+class ResetReport:
+    dealers: int
+    listings: int
+    region: str | None
+
+
 class DemoSeedError(RuntimeError):
     """The seed cannot run (no taxonomy) or produced rows a real writer would not."""
 
@@ -216,21 +233,36 @@ def _weighted(rng: random.Random, weights: Mapping[T, float]) -> T:
     return rng.choices(list(weights), weights=list(weights.values()))[0]
 
 
-def _dealers(rng: random.Random, count: int, districts: Sequence[District]) -> list[DemoDealer]:
+def _dealers(
+    rng: random.Random,
+    count: int,
+    districts: Sequence[District],
+    region: Region | None,
+    taken_slugs: frozenset[str],
+) -> list[DemoDealer]:
     by_region: dict[str, list[District]] = {}
     for district in districts:
         by_region.setdefault(district.region_code, []).append(district)
     regions = {
-        region: weight for region, weight in REGION_POPULATION.items() if region in by_region
+        code: weight
+        for code, weight in REGION_POPULATION.items()
+        if code in by_region and region in (None, code)
     }
+    if not regions:
+        raise DemoSeedError(
+            f'no postcode districts in {REGION_NAMES[region] if region else "the file"}'
+        )
 
     dealers: list[DemoDealer] = []
-    names: set[str] = set()
+    slugs = set(taken_slugs)
     while len(dealers) < count:
-        name = f'{rng.choice(NAME_FIRST)} {rng.choice(NAME_SECOND)} {rng.choice(NAME_SUFFIX)}'
-        if name in names:
-            name = f'{name} {len(dealers) + 1}'
-        names.add(name)
+        base = f'{rng.choice(NAME_FIRST)} {rng.choice(NAME_SECOND)} {rng.choice(NAME_SUFFIX)}'
+        # Unique against this run and every dealer already in the database (slugs are
+        # unique), so a second region can be seeded with the same random seed.
+        name, suffix = base, len(dealers) + 1
+        while slugify(name) in slugs:
+            name, suffix = f'{base} {suffix}', suffix + 1
+        slugs.add(slugify(name))
         district = rng.choice(by_region[_weighted(rng, regions)])
         dealers.append(
             DemoDealer(
@@ -426,16 +458,24 @@ def generate(
     models: Sequence[CatalogueModel],
     today: date,
     now: datetime,
+    region: Region | None = None,
+    taken_slugs: frozenset[str] = frozenset(),
+    taken_plates: frozenset[str] = frozenset(),
 ) -> DemoDataset:
-    """The demo dataset for `random_seed`: same inputs, same output, always."""
+    """The demo dataset for `random_seed`: same inputs, same output, always.
+
+    `region` puts every dealer in that ONS region. `taken_slugs` and `taken_plates` are
+    what the database already holds; generated dealers and plates avoid them.
+    """
     if not models:
         raise DemoSeedError('the taxonomy is empty: run scripts.load_taxonomy first')
     rng = random.Random(random_seed)
-    dealers = _dealers(rng, max(1, math.ceil(listings / LISTINGS_PER_DEALER)), districts)
+    dealer_count = max(1, math.ceil(listings / LISTINGS_PER_DEALER))
+    dealers = _dealers(rng, dealer_count, districts, region, taken_slugs)
     # Dealer sizes vary: a few big forecourts, many small ones.
     dealer_weights = [rng.lognormvariate(0, 0.6) for _ in dealers]
     model_weights = [_make_weight(model) for model in models]
-    plates: set[str] = set()
+    plates = set(taken_plates)
     rows = []
     for _ in range(listings):
         dealer_index = rng.choices(range(len(dealers)), weights=dealer_weights)[0]
@@ -507,16 +547,20 @@ def seed_demo(
     random_seed: int = DEFAULT_RANDOM_SEED,
     today: date | None = None,
     now: datetime | None = None,
+    region: Region | None = None,
 ) -> SeedReport:
     """Generate and write demo inventory in the caller's transaction, under the seed lock.
 
+    With `region`, every dealer is in that region and only demo data there blocks the run.
     Raises `DemoSeedError` (and writes nothing once the caller rolls back) if demo data
-    already exists, the taxonomy is empty, or any listing fails `verify_listing_invariants`.
+    already exists in scope, the taxonomy is empty, or any listing fails
+    `verify_listing_invariants`.
     """
     hold_advisory_lock(session, AdvisoryLock.SEED_DEMO)
-    if demo_dealers(session):
+    if demo_dealers(session, region):
         # Checked under the lock, so two concurrent runs cannot both pass it.
-        raise DemoSeedError('demo data already exists: remove it with --reset first')
+        where = f' in {REGION_NAMES[region]}' if region else ''
+        raise DemoSeedError(f'demo data already exists{where}: remove it with --reset first')
     clock = session.scalar(select(func.now())) if now is None else now
     assert clock is not None
     dataset = generate(
@@ -526,6 +570,11 @@ def seed_demo(
         models=catalogue(session),
         today=today or clock.date(),
         now=clock,
+        region=region,
+        taken_slugs=dealer_slugs(session),
+        taken_plates=frozenset(
+            vrm for vrm in session.scalars(select(Listing.vrm).where(Listing.is_demo)) if vrm
+        ),
     )
     ids = write_dataset(session, dataset)
     # A seeded listing that was never held has been visible since it was published.
@@ -543,6 +592,40 @@ def seed_demo(
     if mismatches:
         raise DemoSeedError(f'{len(mismatches)} seeded rows fail verify_listing_invariants')
     return report
+
+
+def reset_demo(session: Session, region: Region | None = None) -> ResetReport:
+    """Hard-delete demo dealers (in `region` if given) and, by cascade, their listings.
+
+    Never touches a real row: only `is_demo` dealers are deleted, and the composite FK
+    stops a demo dealer owning a real listing. Idempotent: a second run deletes nothing.
+    """
+    hold_advisory_lock(session, AdvisoryLock.SEED_DEMO)
+    dealer_ids = [dealer.id for dealer in demo_dealers(session, region)]
+    listings = session.scalar(
+        select(func.count()).select_from(Listing).where(Listing.dealer_id.in_(dealer_ids))
+    )
+    dealers = delete_demo_dealers(session, region)
+    return ResetReport(dealers=dealers, listings=listings or 0, region=region)
+
+
+def production_refusal(
+    *, environment: str, region: Region | None, confirmed: bool, perf: bool
+) -> str | None:
+    """Why this run may not go ahead in `environment`, or None (design §8-§9).
+
+    Production allows only region-scoped runs, explicitly confirmed, and never the perf
+    profile. The CLI checks this before it opens a database session.
+    """
+    if environment != 'production':
+        return None
+    if perf:
+        return '--profile perf is never allowed in production'
+    if region is None:
+        return 'production runs must be scoped with --region'
+    if not confirmed:
+        return 'production runs need --confirm-production'
+    return None
 
 
 # --- export (determinism checks) --------------------------------------------------------

@@ -40,3 +40,39 @@ REGION_NAMES: dict[Region, str] = {
     Region.SCOTLAND: 'Scotland',
     Region.NORTHERN_IRELAND: 'Northern Ireland',
 }
+
+# Short operator codes for CLI flags (`seed_demo --region NW`).
+REGION_SHORT_CODES: dict[Region, str] = {
+    Region.NORTH_EAST: 'NE',
+    Region.NORTH_WEST: 'NW',
+    Region.YORKSHIRE_AND_THE_HUMBER: 'YH',
+    Region.EAST_MIDLANDS: 'EM',
+    Region.WEST_MIDLANDS: 'WM',
+    Region.EAST_OF_ENGLAND: 'EE',
+    Region.LONDON: 'LON',
+    Region.SOUTH_EAST: 'SE',
+    Region.SOUTH_WEST: 'SW',
+    Region.WALES: 'WAL',
+    Region.SCOTLAND: 'SCO',
+    Region.NORTHERN_IRELAND: 'NI',
+}
+
+
+def _key(text: str) -> str:
+    return ''.join(character for character in text.upper() if character.isalnum())
+
+
+_REGION_LOOKUP: dict[str, Region] = {
+    _key(spelling): region
+    for region in Region
+    for spelling in (region.value, region.name, REGION_NAMES[region], REGION_SHORT_CODES[region])
+}
+
+
+def parse_region(text: str) -> Region:
+    """A region from its short code, GSS code or name, ignoring case, spaces and hyphens."""
+    try:
+        return _REGION_LOOKUP[_key(text)]
+    except KeyError:
+        codes = ', '.join(REGION_SHORT_CODES.values())
+        raise ValueError(f'unknown region {text!r}: use one of {codes} or a GSS code') from None
