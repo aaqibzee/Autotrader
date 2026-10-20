@@ -1,6 +1,6 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A8) applied below.
+**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A11) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
 **Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)
@@ -130,7 +130,7 @@ No GIN on `specs` until a spec filter exists (§4 rule).
 | `--region R` | Only create (or with `--reset`, only remove) demo dealers in ONS region `R` |
 | `--reset` | Removes **only** `is_demo = true` dealers and listings (in `--region` if given). Never touches real rows. |
 
-- **Geography without network:** a bundled postcode-district centroid CSV (`backend/data/geo/postcode_districts.csv`: outward code, lat, lng, region code, post town), derived by `scripts/build_postcode_districts.py` from the ONS Postcode Directory as the median coordinate of live geographic postcodes per outward code. ONSPD is OGL but contains Royal Mail, OS and ONS IPR, so the attribution text ships in `backend/data/geo/README.md` (A3). Feature 04 and Feature 07 reuse it as the offline fallback when postcodes.io is unavailable.
+- **Geography without network:** a bundled postcode-district centroid CSV (`backend/data/geo/postcode_districts.csv`: outward code, lat, lng, region code, area name), derived by `scripts/build_postcode_districts.py` from the ONS Postcode Directory as the median coordinate of live, small-user geographic postcodes per outward code. ONSPD is OGL but contains Royal Mail, OS and ONS IPR, so the attribution text ships in `backend/data/geo/README.md` (A3). The file covers Great Britain only: Northern Ireland postcodes are not OGL, so `BT` codes get their region by rule but no centroid (A11). Feature 04 and Feature 07 reuse it as the offline fallback when postcodes.io is unavailable.
 - Make/model/year mix weighted toward the real UK used market (high counts of Ford, Vauxhall, VW, BMW, Mercedes, Audi, Toyota, Nissan, Kia, Hyundai)
 - **Prices from a depreciation curve** (`base_new_price × age_factor × mileage_factor ± noise`), so the price indicator (Feature 12) and price sort produce believable results. Mileage correlated with age (~7–9k miles/year ± variance).
 - **Real derivation path:** every seeded row is built by the §6 functions and goes through `visibility.on_change()`, so `title`, `ulez_compliant`, `listed_at` and `vrm` are set exactly as Feature 05 would set them. Bulk inserts (batches of 1,000) are allowed for speed, but **no column is hand-set** that a real writer derives. A post-seed check, `verify_listing_invariants()`, recomputes each derived field and fails on any mismatch. Feature 05 adds its publish validator to that check.

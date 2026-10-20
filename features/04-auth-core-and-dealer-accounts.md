@@ -93,7 +93,7 @@ and the dealer half. Feature 09 adds the consumer half on the same core, and Fea
 ### 7. Postcode geocoding service (first user here; extended by Feature 07)
 - `modules/geo/services.py`: `geocode_postcode(postcode) -> GeoPoint(lat, lng, precision, outward_code, region_code)` calls postcodes.io through Feature 01 §9's client (postcodes.io rate limits and terms: to verify).
 - Results are cached for 30 days in the cache Redis (`geo:pc:v1:{normalised}`). Postcodes don't move.
-- **Unavailable path:** on `IntegrationUnavailable` the service returns the outward-code centroid from Feature 02 §8's bundled CSV with `precision=district`. Dealer registration then succeeds with `Dealer.geo_precision = district`, and a `regeocode_dealer` task retries with backoff for up to 24 h.
+- **Unavailable path:** on `IntegrationUnavailable` the service returns the outward-code centroid from Feature 02 §8's bundled CSV with `precision=district`. Dealer registration then succeeds with `Dealer.geo_precision = district`, and a `regeocode_dealer` task retries with backoff for up to 24 h. The bundled file has no Northern Ireland centroids (Feature 02 A11), so a `BT` postcode has no offline fallback yet: decide its unavailable path when this feature is built.
 - An unknown postcode (postcodes.io 404, or an outward code not in the CSV) returns 422 `postcode_not_found` on the field, before any write.
 
 ### 8. Dealer profile and team

@@ -12,7 +12,7 @@ amendments below and per-slice verification).
 |---|---|---|---|---|
 | 2.1 | Model conventions, enum/CHECK tooling, taxonomy schema | 1.5 h | — | Done (2026-10-19) |
 | 2.2 | Taxonomy data, loader and alias resolver | 2 h | 2.1 | Done (2026-10-20) |
-| 2.3 | Postcode-district dataset and lookup | 1.5 h | — | Not Started |
+| 2.3 | Postcode-district dataset and lookup | 1.5 h | — | Done (2026-10-20) |
 | 2.4 | `Dealer` core and `Listing` schema | 2 h | 2.1 | Not Started |
 | 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Not Started |
 | 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Not Started |
@@ -39,7 +39,7 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    file is published. `scripts/build_postcode_districts.py` derives it from the ONS
    Postcode Directory (OGL; contains Royal Mail, OS and ONS IPR, so attribution is
    required) using the *median* coordinate of live, geographic postcodes per outward
-   code. Only the ~3,000-row derived CSV is committed, with source edition, licence text
+   code. Only the ~2,700-row derived CSV is committed, with source edition, licence text
    and rebuild command in `backend/data/geo/README.md`.
 - **A4.** **Stock photos leave Feature 02.** Sourcing ~40 redistributable car photos is a
    licensing task, and Feature 06 owns `ListingImage` and the attach step anyway.
@@ -78,6 +78,16 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    and plug-in hybrids are overwhelmingly petrol-electric, so `hybrid` and
    `plug_in_hybrid` use the petrol cut-off; `other` stays `false`. The UI still says
    "Likely" and links to TfL's checker.
+- **A11.** **The district file covers Great Britain only, and names areas, not post towns.**
+   The ONSPD user guide licenses Northern Ireland (`BT`) postcodes from Land and Property
+   Services for internal business use only, not under OGL, so they cannot be committed
+   (playbook §4). `region_for_postcode` maps any `BT` code to Northern Ireland by rule (the
+   area *is* NI); `district_for` returns `None` there, so Feature 04's offline fallback has
+   no NI centroid. ONSPD also has no post town (Royal Mail PAF, licensed), so the fifth
+   column is `area_name`: the local authority holding most of the district's postcodes.
+   Only small-user postcodes count, because large-user and PO Box postcodes sit at the
+   sorting office and form pseudo-districts (`BS98`). Result: 2,738 districts, so the
+   sanity threshold is > 2,700, not > 2,800 (found in 2.3).
 
 ---
 
@@ -235,6 +245,32 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 - Known fixtures: `SW1A` → London, `M1` → North West, `EH1` → Scotland, `BT1` → Northern Ireland.
 - Builder unit test on a small synthetic ONSPD-shaped file: median (not mean) is used,
   terminated and non-geographic postcodes are excluded.
+
+**Notes (done 2026-10-20):**
+- Built from the **ONSPD August 2026** edition (ArcGIS item `9e5a92a3cfb14dc7ad43d6ea7a7b8c7f`),
+  newer than the February 2026 default in the open decisions. The builder reads the zip
+  as downloaded and streams the 1.5 GB CSV from inside it: 27 s locally, never extracted.
+- A11 changed three things against the plan: no Northern Ireland rows (licence), `area_name`
+  instead of post town (ONSPD has none), small-user postcodes only. `BT1` → Northern
+  Ireland still holds, by rule rather than from the file; the district threshold is
+  > 2,700. GB regions all present (11, plus NI by rule).
+- Column names carry the boundary year (`rgn26cd`); the builder matches them by prefix so
+  next year's `rgn27cd` needs no change, and fails if a column is missing or ambiguous.
+  Majority region and authority ties break on the lower code; output is byte-identical
+  per edition.
+- Guards proven: swapping median for mean and dropping the NI exclusion each fail the
+  builder tests; corrupting one committed row (coordinates, region, NI, area name) or
+  truncating the file fails the dataset sanity check.
+- `district_for`, `region_for_postcode`, `outward_code` and `all_districts` live in
+  `app/modules/geo/districts.py` (2.5 re-exports `region_for_postcode` from `derive.py`).
+  Nothing in the module logs, and unparseable input returns `None` without echoing it.
+- **Follow-up (Feature 04 §7):** the offline fallback has no Northern Ireland centroid. A
+  `BT` dealer registered while postcodes.io is down needs another fallback (hold
+  registration, or region-only with no coordinates).
+- **Follow-up (2.4/2.8):** `dealers.region_code` should be CHECK-constrained to the
+  `REGIONS` keys, and 2.8's `--region NW` needs a short-code alias table over them.
+- **Follow-up (Feature 15):** the ONSPD attribution text in `backend/data/geo/README.md`
+  must appear on the site's attribution page.
 
 ---
 
