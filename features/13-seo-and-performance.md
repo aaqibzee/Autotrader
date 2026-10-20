@@ -81,7 +81,7 @@ always). This feature adds the sitemap and canonical rules on top.
 | LCP (detail, results, landings) | < 2.5 s |
 | CLS | < 0.1 |
 | INP | < 200 ms |
-| JS shipped on the detail page | < 150 KB gzipped (public shell ≤ 90 KB, Feature 03 §7) |
+| JS shipped on the detail page | < 150 KB gzipped, to be re-checked against the framework floor Feature 03 slice 3.3 measures (the placeholder shell already loads ~160 KB; public shell budget = floor + 30 KB, Feature 03 §7 A1) |
 | SSR origin TTFB p95 (cache miss) | < 600 ms |
 | API p95: detail / search | < 150 ms / < 300 ms (Feature 08 §4, Feature 07 §7) |
 | Edge cache hit ratio, detail + landing HTML | ≥ 60% |

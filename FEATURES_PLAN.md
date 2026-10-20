@@ -82,7 +82,7 @@ Next.js server is the heaviest workload on that box so far. Do the free-tier res
 |---|---|---|---|---|---|
 | 01 | [Project Foundation](features/01-project-foundation.md) | Must-Have | M1 Foundation | 16h | Done |
 | 02 | [Vehicle Taxonomy & Seed Inventory](features/02-vehicle-taxonomy-and-seed-data.md) | Must-Have | M1 Foundation | 13h | Implemented, nightly scale run pending ([slices](features/02-vehicle-taxonomy-and-seed-data.slices.md)) |
-| 03 | [Design System & App Shell](features/03-design-system-and-app-shell.md) | Must-Have | M1 Foundation | 13h | Not Started |
+| 03 | [Design System & App Shell](features/03-design-system-and-app-shell.md) | Must-Have | M1 Foundation | 13h | Planning ([slices](features/03-design-system-and-app-shell.slices.md)) |
 | 04 | [Auth Core & Dealer Accounts](features/04-auth-core-and-dealer-accounts.md) | Must-Have | M2 Supply | 16h | Not Started |
 | 05 | [Dealer Stock Management](features/05-dealer-stock-management.md) | Must-Have | M2 Supply | 19h | Not Started |
 | 06 | [Listing Image Pipeline](features/06-listing-image-pipeline.md) | Must-Have | M2 Supply | 12h | Not Started |
