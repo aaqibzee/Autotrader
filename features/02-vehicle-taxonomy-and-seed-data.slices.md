@@ -14,7 +14,7 @@ amendments below and per-slice verification).
 | 2.2 | Taxonomy data, loader and alias resolver | 2 h | 2.1 | Done (2026-10-20) |
 | 2.3 | Postcode-district dataset and lookup | 1.5 h | — | Done (2026-10-20) |
 | 2.4 | `Dealer` core and `Listing` schema | 2 h | 2.1 | Done (2026-10-20) |
-| 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Not Started |
+| 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Done (2026-10-20) |
 | 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Not Started |
 | 2.7 | Deterministic demo seed generator | 2.5 h | 2.2, 2.3, 2.6 | Not Started |
 | 2.8 | Seed safety: reset, region scope, production controls | 1.5 h | 2.7 | Not Started |
@@ -104,6 +104,13 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    cascade to reach a real listing. `dealers.region_code` is an enum CHECK over the 12
    ONS codes (`geo.Region`). Postcodes are stored normalised (`SW1A 1AA` or outward code
    only), enforced by `ck_dealers_postcode_format` (found in 2.4).
+- **A14.** **Derivations for incomplete drafts.** Design §6's slug example dropped the
+   title's last word (`…-st-line` for "…ST-Line 5dr") with no rule behind it; the slug is
+   now every word of the title, capped at 80 characters on a word boundary, `car` if
+   nothing usable is left. It is cosmetic (Feature 08 redirects on the id). `derive_ulez`
+   returns `None` when the fuel type or registration date is missing, which is what the
+   nullable column and `ck_listings_publish_complete` (A12) expect; electric and `other`
+   need no date (found in 2.5).
 
 ---
 
@@ -371,6 +378,35 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 - Specs: unknown key and > 16 KB both raise; a valid payload round-trips with
   `specs_version = 1`; unknown equipment code rejected; free-text extras capped at 10 × 60.
 - Coverage of `derive.py` and `specs.py` at 100% (pure code, no excuse).
+
+**Notes (done 2026-10-20):**
+- Vocabulary: 123 equipment codes in 9 display groups (safety, driver assistance,
+  comfort, infotainment, exterior, interior, practicality, performance, electric), each
+  with a label for Feature 05's checklist and Feature 08's grouped display
+  (`equipment_by_group`). Codes are stored, so they never change; retiring one needs a
+  specs version bump.
+- The 16 KB cap measures the raw payload's compact UTF-8 JSON *before* validation, so a
+  huge body is refused without parsing it. The largest valid payload (every code, 10
+  extras) is under half the cap, so the cap never refuses honest input.
+- `parse_specs(raw, version)` refuses unknown versions and runs `UPGRADES[n]` step by
+  step up to `SPECS_VERSION`; the hook is exercised by a test that simulates a V2.
+  Field errors are pydantic `ValidationError`s (one location each, ready for a 422);
+  size and version errors are `SpecsError`. `mot_checked_at` must be timezone-aware.
+- `build_title` collapses whitespace, skips missing parts (a bare draft gives `''`, which
+  the A12 CHECK allows only for drafts) and cuts at a word boundary at 160.
+- `normalise_vrm`'s output is tested against `VRM_PATTERN`, and `VRM_PATTERN` against the
+  live `ck_listings_vrm_normalised` definition (2.4 follow-up closed).
+- A test runs `derive_ulez` over every `FuelType`, so adding a fuel without a ULEZ rule
+  fails CI instead of falling through.
+- import-linter's "only cross-import services" contract forbids reaching another module's
+  `models` *indirectly* too, and `taxonomy.services` imports `taxonomy.models`. So 2.2's
+  "services is the only entry point" cannot hold for listings: `derive.py` imports
+  `slugify` from the pure `taxonomy.naming` (and `models.py` the enums from
+  `taxonomy.enums`). Rule from here on: other modules import a module's `services`, or its
+  pure leaf modules (`enums`, `naming`) that import no models. Caught by the gate, not by
+  a test.
+- Coverage is 100% for both files but only verified locally; the CI gate is the global
+  85%. **Follow-up (2.9):** consider a per-file 100% gate for pure modules.
 
 ---
 

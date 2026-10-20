@@ -1,6 +1,6 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A13) applied below.
+**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A14) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
 **Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)
@@ -107,8 +107,8 @@ plus `TimestampMixin`.
 `modules/listings/derive.py`, used by Feature 05's write path **and** by the seed, so
 seeded rows can never differ from real ones:
 - `build_title(year, make, model, variant)` → `"2019 Ford Fiesta 1.0 EcoBoost ST-Line 5dr"`
-- `listing_slug(title)` → `2019-ford-fiesta-1-0-ecoboost-st-line` (Feature 08 URL)
-- `derive_ulez(fuel_type, registration_date)`: Euro 4 petrol is roughly 2006 onward, Euro 6 diesel roughly September 2015 onward, EVs always qualify, hybrids and plug-in hybrids follow the petrol cut-off because UK hybrids are overwhelmingly petrol-electric (A8), `other` is `false`. Labelled "Likely ULEZ compliant" in the UI with a TfL link.
+- `listing_slug(title)` → `2019-ford-fiesta-1-0-ecoboost-st-line-5dr` (Feature 08 URL): every word of the title, capped at 80 characters on a word boundary (A14)
+- `derive_ulez(fuel_type, registration_date)`: Euro 4 petrol is roughly 2006 onward, Euro 6 diesel roughly September 2015 onward, EVs always qualify, hybrids and plug-in hybrids follow the petrol cut-off because UK hybrids are overwhelmingly petrol-electric (A8), `other` is `false`. Returns `None` while a draft lacks the fuel type or registration date (A12, A14). Labelled "Likely ULEZ compliant" in the UI with a TfL link.
 - `normalise_vrm(raw)`: upper-case, strip spaces and non-alphanumerics, validate length 2–7 (`None` if invalid). Every VRM comparison (duplicate detection, lookups, Feature 14 checks) uses the normalised form.
 - `region_for_postcode(postcode)`: outward code → ONS region via the bundled district CSV (§8).
 
