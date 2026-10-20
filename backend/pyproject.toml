@@ -78,3 +78,6 @@ name = "Domain modules only cross-import services"
 type = "forbidden"
 source_modules = ["app.modules.*"]
 forbidden_modules = ["app.modules.*.models", "app.modules.*.tasks"]
+# Only direct imports are forbidden. A module's services import its own models, so with
+# indirect imports forbidden too no module could call another's services (Feature 02 A15).
+allow_indirect_imports = true

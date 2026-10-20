@@ -15,7 +15,7 @@ amendments below and per-slice verification).
 | 2.3 | Postcode-district dataset and lookup | 1.5 h | — | Done (2026-10-20) |
 | 2.4 | `Dealer` core and `Listing` schema | 2 h | 2.1 | Done (2026-10-20) |
 | 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Done (2026-10-20) |
-| 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Not Started |
+| 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Done (2026-10-20) |
 | 2.7 | Deterministic demo seed generator | 2.5 h | 2.2, 2.3, 2.6 | Not Started |
 | 2.8 | Seed safety: reset, region scope, production controls | 1.5 h | 2.7 | Not Started |
 | 2.9 | Scale proof, CI wiring, docs | 1.5 h | 2.8 | Not Started |
@@ -111,6 +111,14 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    returns `None` when the fuel type or registration date is missing, which is what the
    nullable column and `ck_listings_publish_complete` (A12) expect; electric and `other`
    need no date (found in 2.5).
+- **A15.** **The module-boundary contract forbids direct imports only.** As written, "Domain
+   modules only cross-import services" also forbade *indirect* imports of another module's
+   `models`, and every `services` module imports its own models, so no module could call
+   another's services at all (A7's whole premise). The contract now sets
+   `allow_indirect_imports = true`: `from app.modules.taxonomy.models import …` in
+   `listings` still fails (probe re-run), `taxonomy.services` is allowed. 2.5's workaround
+   (import pure leaf modules such as `naming`) stays valid but is no longer required
+   (found in 2.6).
 
 ---
 
@@ -435,6 +443,34 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 - `system_update` refuses a column outside the allow-list.
 - `listed_at`: set on first visibility, null while held, unchanged by unpublish → republish.
 - Invariant checker catches a deliberately corrupted title (negative proof).
+
+**Notes (done 2026-10-20):**
+- `on_change(session, listing)` flushes, then runs one conditional UPDATE
+  (`WHERE id = … AND <publicly_visible> AND listed_at IS NULL`): visibility is decided by
+  the database row, not a possibly stale object (tested: a hold cleared behind the
+  object's back), and two concurrent calls cannot both stamp it.
+- `system_update(session, listing_id, *, where=(), **cols)` writes
+  `updated_at = updated_at` explicitly and returns whether a row matched; `where` is what
+  makes `on_change` conditional. Allow-list is exactly design §5's five columns.
+- Lock-token tests commit between steps, because `now()` is constant inside a Postgres
+  transaction and a same-transaction check passes even when `onupdate` fires. Negative
+  proof both ways: an ordinary dealer edit changes the token and `ensure_not_stale`
+  raises; deleting `updated_at = updated_at` from `system_update` fails two tests;
+  deleting the `listed_at IS NULL` condition fails the lifecycle test.
+- One visibility rule in two forms, both in `listings/models.py`: `visible_predicate`
+  (SQL) and `is_visible` (loaded values), table-tested together over all 20
+  `status × moderation_status` rows. `archived_at` is tied to `status = archived` by the
+  schema, so that dimension needs no separate rows.
+- `verify_listing_invariants` walks listings in id order (keyset, 1,000 per batch) and
+  gets names through `taxonomy.services.make_names/model_names`, which include inactive
+  rows, so a rename or retirement shows up as a title mismatch. VRM normal form is
+  checked although `ck_listings_vrm_normalised` already makes a bad one unstorable.
+- Factories: `tests/factories/dealers.py` (`create_dealer`, location from the district
+  file) and `tests/factories/listings.py` (`create_vehicle`, `create_listing`). Derived
+  columns come from `derive.py`, `listed_at` from `on_change`; plain functions rather than
+  factory_boy, because the derivation order matters.
+- **Follow-up (Feature 05):** add `validate_publishable` to `verify_listing_invariants`
+  (Feature 05 §2 says so) once it exists.
 
 ---
 

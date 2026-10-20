@@ -1,6 +1,6 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A14) applied below.
+**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A15) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
 **Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)

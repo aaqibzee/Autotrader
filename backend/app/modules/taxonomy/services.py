@@ -13,6 +13,7 @@ resolvers are a single indexed lookup instead of three.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -38,6 +39,8 @@ __all__ = [
     'SlugChangeError',
     'TaxonomyDataError',
     'load_taxonomy',
+    'make_names',
+    'model_names',
     'normalise_lookup',
     'resolve_make',
     'resolve_model',
@@ -281,3 +284,22 @@ def resolve_model(session: Session, make_id: UUID, text: str | None) -> UUID | N
         .join(ModelAlias, ModelAlias.model_id == VehicleModel.id)
         .where(VehicleModel.make_id == make_id, ModelAlias.alias == key, VehicleModel.is_active)
     )
+
+
+def make_names(session: Session, make_ids: Iterable[UUID]) -> dict[UUID, str]:
+    """Display names by id, inactive makes included (listings keep referencing them)."""
+    ids = set(make_ids)
+    if not ids:
+        return {}
+    return dict(session.execute(select(Make.id, Make.name).where(Make.id.in_(ids))).tuples().all())
+
+
+def model_names(session: Session, model_ids: Iterable[UUID]) -> dict[UUID, str]:
+    """Display names by id, inactive models included."""
+    ids = set(model_ids)
+    if not ids:
+        return {}
+    rows = session.execute(
+        select(VehicleModel.id, VehicleModel.name).where(VehicleModel.id.in_(ids))
+    )
+    return dict(rows.tuples().all())

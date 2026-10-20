@@ -88,6 +88,15 @@ def visible_predicate(
     )
 
 
+def is_visible(status: str, moderation_status: str, archived_at: datetime | None) -> bool:
+    """`visible_predicate` for values already loaded (tested against it on every state)."""
+    return (
+        status in VISIBLE_STATUSES
+        and moderation_status == ModerationStatus.CLEAR
+        and archived_at is None
+    )
+
+
 def _range(column: str, low: int, high: int) -> CheckConstraint:
     return CheckConstraint(f'{column} BETWEEN {low} AND {high}', name=f'{column}_range')
 
