@@ -47,6 +47,9 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            # One transaction per revision, so an autocommit block inside one (e.g.
+            # replace_enum_check's VALIDATE) commits only that revision's earlier steps.
+            transaction_per_migration=True,
         )
 
         with context.begin_transaction():

@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.db.session import SyncSessionLocal
-from app.models import FeatureFlag
+from app.models.feature_flag import FeatureFlag
 
 _CACHE_TTL_SECONDS = 30.0
 _NAME_PATTERN = re.compile(r'^[a-z0-9]+(?:_[a-z0-9]+)*$')

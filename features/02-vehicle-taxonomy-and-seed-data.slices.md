@@ -10,7 +10,7 @@ amendments below and per-slice verification).
 
 | # | Slice | Est. | Depends on | Status |
 |---|---|---|---|---|
-| 2.1 | Model conventions, enum/CHECK tooling, taxonomy schema | 1.5 h | — | Not Started |
+| 2.1 | Model conventions, enum/CHECK tooling, taxonomy schema | 1.5 h | — | Done (2026-10-19) |
 | 2.2 | Taxonomy data, loader and alias resolver | 2 h | 2.1 | Not Started |
 | 2.3 | Postcode-district dataset and lookup | 1.5 h | — | Not Started |
 | 2.4 | `Dealer` core and `Listing` schema | 2 h | 2.1 | Not Started |
@@ -57,7 +57,10 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    `app/modules/<domain>/models.py`. Cross-module links are FKs by table name
    (`ForeignKey('dealers.id')`) with no ORM `relationship()` across modules, so
    import-linter's "modules import each other's services only" holds. `app/models/__init__.py`
-   imports every module's models so Alembic and the mapper registry see them.
+   imports every module's models so Alembic and the mapper registry see them. Because
+   that package now reaches into `app.modules`, only Alembic imports the package itself:
+   `app.core` imports platform models by submodule (`app.models.feature_flag`), or the
+   "Core does not depend on domain modules" contract breaks (found in 2.1).
 - **A8.** **Hybrids follow the petrol ULEZ rule.** Design §6 said "everything else `false`",
    which would mark every hybrid non-compliant (a 2020 Prius is compliant). UK hybrids
    and plug-in hybrids are overwhelmingly petrol-electric, so `hybrid` and
@@ -95,6 +98,32 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 - Round trip + `alembic check` clean.
 
 **Done when:** gate green (playbook §6); migration round trip clean; slice committed and pushed.
+
+**Notes (done 2026-10-19):**
+- The enum-CHECK "registry" is the metadata itself: `enum_check()` tags each constraint's
+  `info` and `enum_checks(metadata)` walks every table, so nothing can be left
+  unregistered. The drift test asserts it found `vehicle_models.body_types`, so it cannot
+  pass vacuously on zero constraints.
+- `replace_enum_check` runs `VALIDATE` in an Alembic `autocommit_block`. Inside the same
+  transaction as `ADD … NOT VALID` it would hold the ACCESS EXCLUSIVE lock for the whole
+  scan, which defeats the point. `alembic/env.py` now sets `transaction_per_migration=True`
+  so that block commits only its own revision. Tested both ways: widening succeeds;
+  narrowing below existing rows fails validation and leaves a NOT VALID check, which the
+  drift test reports.
+- The naming convention now uses the `column_0_N` forms, so multi-column keys are named
+  after every column (`uq_vehicle_models_make_id_slug`, not `…_make_id`). Single-column
+  names are unchanged (`alembic check` is clean against the existing schema).
+- Autogenerate *did* emit these CHECKs because they sit on new tables; it only misses
+  CHECKs added to existing tables. The migration keeps them as literal SQL rather than
+  building them from the live enums, so a later enum change cannot rewrite history.
+- FKs: alias → make/model `ON DELETE CASCADE`; model → make keeps RESTRICT (taxonomy is
+  never deleted). Alias uniqueness: `make_aliases.alias` globally, `model_aliases
+  (model_id, alias)`.
+- import-linter: the wildcard contracts already cover `taxonomy`. Probes: a `listings`
+  file importing `taxonomy.models` breaks the contract; `taxonomy` importing its own
+  `models` is allowed, which 2.2's services need.
+- **Follow-up for 2.2:** `ck_*_alias_upper_case` only enforces upper case. Once 2.2 fixes
+  the resolver's normal form, tighten the CHECK to that exact form (playbook §2).
 
 ---
 
