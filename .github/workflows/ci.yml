@@ -109,6 +109,13 @@ jobs:
           uv run alembic downgrade base
           uv run alembic upgrade head
           uv run alembic check
+      - name: Seed smoke (taxonomy, 500 demo listings, invariants)
+        working-directory: backend
+        # Feature 02 §10: the real CLIs on the freshly migrated schema, network-free.
+        run: |
+          uv run python -m scripts.load_taxonomy
+          uv run python -m scripts.seed_demo --listings 500
+          uv run python -m scripts.verify_listings
 
   web:
     name: Web

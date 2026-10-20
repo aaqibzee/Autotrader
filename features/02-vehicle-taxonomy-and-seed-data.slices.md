@@ -18,7 +18,7 @@ amendments below and per-slice verification).
 | 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Done (2026-10-20) |
 | 2.7 | Deterministic demo seed generator | 2.5 h | 2.2, 2.3, 2.6 | Done (2026-10-20) |
 | 2.8 | Seed safety: reset, region scope, production controls | 1.5 h | 2.7 | Done (2026-10-20) |
-| 2.9 | Scale proof, CI wiring, docs | 1.5 h | 2.8 | Not Started |
+| 2.9 | Scale proof, CI wiring, docs | 1.5 h | 2.8 | Built (2026-10-20); awaiting the first nightly run |
 
 Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time before 2.5.
 
@@ -610,6 +610,32 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 
 **Done when:** nightly job passes once on GitHub (ask the user to trigger it via
 `workflow_dispatch` and check the Actions tab; playbook §7).
+
+**Notes (built 2026-10-20):**
+- CI `backend` job: after the migration round trip, a "Seed smoke" step runs the real
+  CLIs: `load_taxonomy`, `seed_demo --listings 500`, then the new
+  `scripts.verify_listings` (read-only `verify_listing_invariants`, exit 1 on any
+  mismatch, logs the first 20).
+- `.github/workflows/nightly.yml` (03:30 UTC and `workflow_dispatch`): Postgres only;
+  migrate, load the taxonomy, seed 5,000 (fails at ≥ 120 s, verified, then reset), seed
+  `--profile perf` (fails at ≥ 600 s, verified), then `scripts.check_query_plans`. Seed
+  times go to the job summary. Timings include `uv run` start-up, so they are slightly
+  pessimistic.
+- `scripts/check_query_plans.py` holds a `QUERIES` registry (name → builder); Feature 07
+  appends its search queries there. It runs `ANALYZE` on the listing tables (a
+  just-seeded table has no statistics), then `EXPLAIN (ANALYZE, FORMAT JSON)` three
+  times per query, bound the way the app binds (psycopg dialect, visibility constants
+  inline). A query fails on a `Seq Scan` of `listings` in any run, a median over 50 ms,
+  or **zero rows** (otherwise a pass over an empty result would prove nothing).
+- Locally at 5,000 listings: the Ford £5k–£10k query returns 248 rows in 0.47 ms via
+  `Bitmap Index Scan` on `ix_listings_visible_make_id_model_id_price_pence`, then a sort.
+  50,000 is not run on this machine (playbook §7); the nightly job measures it.
+- Negative proofs: synthetic plans (a nested seq scan of `listings` is flagged, one of
+  `makes` is not; slow median; one slow outlier passes; empty result), and a real plan
+  with index and bitmap scans disabled, which the checker must reject.
+- Still open from 2.5: a per-file 100% coverage gate for the pure modules (`derive.py`,
+  `specs.py`) is not added; every Feature 02 module is at 100% today but only the
+  global 85% is enforced. **Follow-up (playbook change, not a Feature 02 slice).**
 
 ---
 

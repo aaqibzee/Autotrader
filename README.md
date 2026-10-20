@@ -35,6 +35,20 @@ make logs       # follow container logs
 make down       # stop containers (data volumes are kept)
 ```
 
+Vehicle taxonomy and demo inventory (Feature 02), run from `backend/`:
+
+```sh
+uv run python -m scripts.load_taxonomy           # makes/models; idempotent, runs on every deploy
+uv run python -m scripts.seed_demo               # 5,000 demo listings, deterministic (--random-seed 42)
+uv run python -m scripts.seed_demo --region NW   # one ONS region only (NW, LON, SCO, ... or a GSS code)
+uv run python -m scripts.seed_demo --reset       # remove demo dealers and listings (--region to scope)
+uv run python -m scripts.verify_listings         # recompute every derived listing column; exit 1 on drift
+```
+
+Demo data never looks real: plates start with `Z`, dealer names contain "Demo", and
+locations are postcode-district centroids. In production `seed_demo` needs `--region` and
+`--confirm-production` and refuses `--profile perf` (50,000 listings, nightly CI only).
+
 Local URLs:
 
 - Web: <http://127.0.0.1:3000> (the home page shows API readiness)

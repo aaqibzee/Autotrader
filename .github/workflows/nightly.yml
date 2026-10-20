@@ -1,0 +1,73 @@
+name: Nightly
+
+# Scale proof (Feature 02 §8, slice 2.9): seed timings and the listing query budget,
+# measured on the same runner class every night. Feature 07 adds its search queries to
+# scripts/check_query_plans.py, which this job already runs.
+'on':
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scale:
+    name: Seed scale and query plans
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ENVIRONMENT: local
+      SECRET_KEY: ci-only-secret-not-for-deployment
+      DATABASE_URL: postgresql+psycopg://autotrader:ci-only-postgres-password@127.0.0.1:5432/autotrader
+      POSTGRES_PASSWORD: ci-only-postgres-password
+      S3_ROOT_ACCESS_KEY: ci-only-s3-root
+      S3_ROOT_SECRET_KEY: ci-only-s3-root-password
+      S3_ACCESS_KEY: ci-only-s3-user
+      S3_SECRET_KEY: ci-only-s3-secret
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start Postgres
+        working-directory: .
+        run: docker compose up -d --wait postgres
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Install locked backend dependencies
+        run: uv sync --frozen --no-dev
+      - name: Migrate and load the taxonomy
+        run: |
+          uv run alembic upgrade head
+          uv run python -m scripts.load_taxonomy
+      - name: Seed 5,000 listings (budget 2 minutes)
+        run: |
+          start=$SECONDS
+          uv run python -m scripts.seed_demo --listings 5000
+          elapsed=$((SECONDS - start))
+          echo "5,000-listing seed: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$elapsed" -ge 120 ]; then
+            echo "::error::5,000-listing seed took ${elapsed}s (budget 120s)"
+            exit 1
+          fi
+          uv run python -m scripts.verify_listings
+          uv run python -m scripts.seed_demo --reset
+      - name: Seed the perf profile, 50,000 listings (budget 10 minutes)
+        run: |
+          start=$SECONDS
+          uv run python -m scripts.seed_demo --profile perf
+          elapsed=$((SECONDS - start))
+          echo "50,000-listing seed: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$elapsed" -ge 600 ]; then
+            echo "::error::50,000-listing seed took ${elapsed}s (budget 600s)"
+            exit 1
+          fi
+          uv run python -m scripts.verify_listings
+      - name: Query plans and timings (no sequential scan of listings, 50 ms median)
+        run: uv run python -m scripts.check_query_plans --budget-ms 50

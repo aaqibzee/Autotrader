@@ -1,6 +1,6 @@
 # Feature 02 — Vehicle Taxonomy & Seed Inventory
 
-**Status:** Planning. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A17) applied below.
+**Status:** Implemented (2026-10-20); Done once the first nightly scale run passes on GitHub. Delivered in 9 slices: [02-vehicle-taxonomy-and-seed-data.slices.md](02-vehicle-taxonomy-and-seed-data.slices.md), which also lists the design amendments (A1–A17) applied below.
 **Priority:** Must-Have
 **Milestone:** M1 Foundation
 **Effort:** 6h optimistic / 13h realistic / 20h pessimistic (slice plan: ~16 h including per-slice verification)
@@ -271,3 +271,14 @@ ships only the starter set.
 **Scale traps to avoid:** a second document database (MongoDB) for specs, as in report
 §2; a full trim taxonomy built in-house; scraping real listings to make the demo look
 realistic.
+
+---
+
+## Implementation notes (2026-10-20)
+
+Built in slices 2.1–2.9; each slice's notes in the [slices file](02-vehicle-taxonomy-and-seed-data.slices.md) record what was found and how each guard was proven to fail. The headlines:
+
+- **Amendments A1–A17** changed this design while building it. The ones later features feel most: one lookup normal form for aliases (A9), slugs as explicit CSV data (A10), Northern Ireland has no offline centroid (A11), a draft can be archived without ever being published (A12), modules import each other's `services` or pure leaf modules only (A15), seeded `listed_at` is the publish time (A16), and regions seed independently (A17).
+- **Measured:** 5,000 demo listings seed in about 5 s locally (budget 2 min). The Ford £5k–£10k query takes 0.5 ms at 5,000 rows through the partial visible index. The 50,000-row seed (budget 10 min) and the 50 ms query budget are measured every night by `nightly.yml` via `scripts/check_query_plans.py`, where Feature 07 adds its queries.
+- **Known limitations:** the taxonomy has no production years, so a seeded car can predate its model's launch. Demo listings have no photos until Feature 06 §8, so Feature 05's publish validator must exempt `is_demo` rows when it joins `verify_listing_invariants`.
+- **Follow-ups owned elsewhere:** Feature 04 needs a postcode normaliser before writing `dealers.postcode`; Feature 05 adds `validate_publishable` to the invariant check; Feature 15 needs an ONSPD attribution page; a per-file 100% coverage gate for pure modules is a playbook decision.
