@@ -16,7 +16,7 @@ amendments below and per-slice verification).
 | 2.4 | `Dealer` core and `Listing` schema | 2 h | 2.1 | Done (2026-10-20) |
 | 2.5 | Pure derivations and the `specs` model | 1.5 h | 2.1, 2.3 | Done (2026-10-20) |
 | 2.6 | Visibility, `listed_at`, `system_update`, factories, invariants | 2 h | 2.4, 2.5 | Done (2026-10-20) |
-| 2.7 | Deterministic demo seed generator | 2.5 h | 2.2, 2.3, 2.6 | Not Started |
+| 2.7 | Deterministic demo seed generator | 2.5 h | 2.2, 2.3, 2.6 | Done (2026-10-20) |
 | 2.8 | Seed safety: reset, region scope, production controls | 1.5 h | 2.7 | Not Started |
 | 2.9 | Scale proof, CI wiring, docs | 1.5 h | 2.8 | Not Started |
 
@@ -119,6 +119,14 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
    `listings` still fails (probe re-run), `taxonomy.services` is allowed. 2.5's workaround
    (import pure leaf modules such as `naming`) stays valid but is no longer required
    (found in 2.6).
+- **A16.** **Seeded `listed_at` is the publish time, through the same rule.** Calling
+   `on_change` per row would stamp every seeded listing with the same `now()`, so
+   "newest first" (Feature 07) would be one big tie. `visibility.stamp_listed_at(ids,
+   at=…)` is the set form of `on_change`'s rule (visible and not yet listed; `on_change`
+   is now its one-row case), and the seed passes `at = Listing.published_at`: a seeded
+   listing that was never held has been visible since it was published. `seed_demo`
+   also refuses to run while demo dealers exist ("remove it with --reset first"), checked
+   under the advisory lock, rather than failing on a slug collision (found in 2.7).
 
 ---
 
@@ -498,6 +506,38 @@ Slices 2.1 and 2.3 have no dependency on each other; 2.3 can be done any time be
 - Price sanity: within each popular make, median price of 1-year-old > 5-year-old > 10-year-old.
 - Every generated VRM starts with `Z`; no dealer name matches the real-name blocklist fixture.
 - Timed run of 5,000 locally (single process; record the time in the slice notes).
+
+**Notes (done 2026-10-20):**
+- **Timing:** the real CLI (`scripts.seed_demo --listings 5000`) against the test stack:
+  63 dealers, 5,000 listings (4,217 active, 260 reserved, 263 sold, 260 draft), invariants
+  clean, **5.2 s** end to end (budget 2 min). 50k is left to the nightly job (2.9,
+  playbook §7).
+- `generate()` is pure and takes `today`/`now` as inputs, so the same seed gives the same
+  dataset on any day; `seed_demo` reads them from the database clock once. Export for the
+  determinism test: `export_demo()` (dealers by slug, listings by VRM, no ids or
+  timestamps); two seeded runs export byte-identically, a different seed differs.
+- Module boundaries: dealers are written through a new `dealers/services.py`
+  (`insert_dealers`, `demo_dealers`; 2.8's reset goes there too) and the taxonomy is read
+  through `taxonomy.services.catalogue()`.
+- Realism: region weights are ONS mid-2023 populations (NI excluded, A11); make weights
+  approximate UK used stock; prices are `tier price × body factor × age factor × mileage
+  factor × lognormal noise`, rounded to £x45/£x95. Medians fall 1 > 5 > 10 years for every
+  popular make with enough samples (asserted for ≥ 8 makes on a 10k pure run). An
+  explicit `ELECTRIC_ONLY_MODELS` list (tested to exist in the taxonomy) stops a petrol
+  "Q6 e-tron"; electric cars get no engine size and are automatic.
+- Demo markers: plates match `Z[A-HJ-PR-Y][0-9]{2}[A-HJ-PR-Z]{3}` with the age
+  identifier matching the registration date; every dealer name contains "Demo" and none
+  contains a name from a fixture of 28 real UK dealer groups; every description says the
+  car is not for sale and the dealer is fictional.
+- Negative proof: a seed whose title derivation drifts raises `DemoSeedError` and writes
+  nothing (one transaction).
+- **Known limitation:** the taxonomy has no production years, so a seeded "2013 Mazda
+  CX-30" (launched 2019) can occur. Harmless for search and perf; revisit if a
+  `first_year`/`last_year` column is ever added to `vehicle_models`.
+- No photos (A4): demo listings are `active` with `photo_count = 0`, which Feature 05's
+  publish validator (≥ 3 images) would refuse. When 05 adds that validator to
+  `verify_listing_invariants`, it must exempt `is_demo` rows until Feature 06 §8 attaches
+  stock photos. **Follow-up (Feature 05).**
 
 ---
 

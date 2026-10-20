@@ -35,9 +35,11 @@ from app.modules.taxonomy.models import Make, MakeAlias, ModelAlias, VehicleMode
 from app.modules.taxonomy.naming import normalise_lookup, slugify
 
 __all__ = [
+    'CatalogueModel',
     'LoadReport',
     'SlugChangeError',
     'TaxonomyDataError',
+    'catalogue',
     'load_taxonomy',
     'make_names',
     'model_names',
@@ -303,3 +305,49 @@ def model_names(session: Session, model_ids: Iterable[UUID]) -> dict[UUID, str]:
         select(VehicleModel.id, VehicleModel.name).where(VehicleModel.id.in_(ids))
     )
     return dict(rows.tuples().all())
+
+
+@dataclass(frozen=True)
+class CatalogueModel:
+    """An active model with its make, for generators and pickers (no ORM objects leak)."""
+
+    make_id: UUID
+    make_slug: str
+    make_name: str
+    make_is_popular: bool
+    model_id: UUID
+    model_slug: str
+    model_name: str
+    body_types: tuple[str, ...]
+
+
+def catalogue(session: Session) -> list[CatalogueModel]:
+    """Every active model of an active make, sorted by make slug then model slug."""
+    rows = session.execute(
+        select(
+            Make.id,
+            Make.slug,
+            Make.name,
+            Make.is_popular,
+            VehicleModel.id,
+            VehicleModel.slug,
+            VehicleModel.name,
+            VehicleModel.body_types,
+        )
+        .join(VehicleModel, VehicleModel.make_id == Make.id)
+        .where(Make.is_active, VehicleModel.is_active)
+        .order_by(Make.slug, VehicleModel.slug)
+    )
+    return [
+        CatalogueModel(
+            make_id,
+            make_slug,
+            make_name,
+            is_popular,
+            model_id,
+            model_slug,
+            model_name,
+            tuple(body_types),
+        )
+        for make_id, make_slug, make_name, is_popular, model_id, model_slug, model_name, body_types in rows
+    ]

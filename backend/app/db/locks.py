@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 class AdvisoryLock(IntEnum):
     TAXONOMY_LOAD = 2_0001
+    SEED_DEMO = 2_0002
 
 
 def hold_advisory_lock(session: Session, lock: AdvisoryLock) -> None:
