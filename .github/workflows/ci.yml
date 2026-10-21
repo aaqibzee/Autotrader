@@ -148,6 +148,8 @@ jobs:
         run: npm run lint
       - name: Enforce typed API client boundary
         run: node ops/ci/check_web_fetch.mjs
+      - name: Public routes never reach the session API client
+        run: node ops/ci/check_web_boundaries.mjs
       - name: Unit tests and coverage gate
         working-directory: web
         run: npm run test:coverage

@@ -49,6 +49,7 @@ backend-check:
 web-check:
 	@cd web && npm run typecheck && npm run lint && npm run test:coverage
 	@node ops/ci/check_web_fetch.mjs
+	@node ops/ci/check_web_boundaries.mjs
 
 check: backend-check test web-check
 

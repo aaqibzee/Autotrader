@@ -1,5 +1,5 @@
 import { ApiError } from "@/lib/api/error";
-import { getServerApi } from "@/lib/api/server";
+import { getPublicApi } from "@/lib/api/public";
 import { BRAND } from "@/lib/brand";
 import Link from "next/link";
 
@@ -8,7 +8,7 @@ export default async function HomePage() {
   let requestId: string | undefined;
 
   try {
-    const readiness = await getServerApi("/api/v1/health/ready");
+    const readiness = await getPublicApi("/api/v1/health/ready");
     ready = readiness.status === "ready";
   } catch (error) {
     if (error instanceof ApiError) {

@@ -25,6 +25,9 @@ export default defineConfig({
         "styles/contrast.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
         // Feature 03 A1: losing an early error, or reporting it twice, is silent in production.
         "lib/observability/lazy-sentry.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
+        // Feature 03 §3, §6: an open redirect or a forwarded cookie is a security bug.
+        "lib/navigation/safe-next.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
+        "lib/api/forwarding.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
       },
     },
   },

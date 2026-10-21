@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.v1.endpoints.dev import mount_dev_routes
 from app.api.v1.endpoints.health import (
     health_live as health_live_endpoint,
 )
@@ -46,6 +47,8 @@ app = FastAPI(
 )
 app.include_router(api_router, prefix='/api/v1')
 app.include_router(health_router)
+# Probe endpoints for the web e2e suite; local only, never in staging or production.
+mount_dev_routes(app, settings.ENVIRONMENT)
 install_exception_handlers(app)
 
 if settings.ENVIRONMENT == 'local':

@@ -114,7 +114,7 @@ describe("no colour outside the tokens", () => {
   const files = sourceDirs.flatMap((dir) => sourceFiles(path.join(webRoot, dir)));
 
   it("scans the source tree", () => {
-    expect(files.some((file) => file.endsWith(path.join("app", "page.tsx")))).toBe(true);
+    expect(files.some((file) => file.endsWith(path.join("app", "layout.tsx")))).toBe(true);
   });
 
   it("no Tailwind arbitrary colour values in components", () => {

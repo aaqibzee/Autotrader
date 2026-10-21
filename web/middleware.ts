@@ -1,4 +1,5 @@
 import { buildContentSecurityPolicy } from "@/lib/security/csp";
+import { isPrivatePath } from "@/lib/security/private-paths";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Same rule as the API's RequestContextMiddleware, so an id accepted here is accepted there.
@@ -17,7 +18,7 @@ export function middleware(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);
 
-  // One id per page render, forwarded on SSR -> API calls (lib/api/server.ts) and tagged on
+  // One id per page render, forwarded on SSR -> API calls (lib/api/forwarding.ts) and tagged on
   // error reports, so a broken page can be traced through the API logs.
   const incomingId = request.headers.get("x-request-id");
   const requestId = incomingId && REQUEST_ID.test(incomingId) ? incomingId : crypto.randomUUID();
@@ -26,6 +27,10 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", contentSecurityPolicy);
   response.headers.set("X-Request-ID", requestId);
+  if (isPrivatePath(request.nextUrl.pathname)) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.set("X-Robots-Tag", "noindex");
+  }
   return response;
 }
 

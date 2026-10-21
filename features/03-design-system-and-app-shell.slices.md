@@ -16,7 +16,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.1 | Tokens, font, contrast test, web coverage scope | 1.5 h | — | Done (2026-10-20) |
 | 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Built (2026-10-20); both CSP specs pass locally (2026-10-21); awaiting CI e2e |
 | 3.3 | First-load JS budget and lazy Sentry | 1.5 h | 3.2 | Done (2026-10-21) |
-| 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Not started |
+| 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Done (2026-10-21) |
 | 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Not started |
 | 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Not started |
 | 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Not started |
@@ -363,6 +363,50 @@ production server.
 - `safeNextPath` table: `https://evil.example`, `//evil`, `/\evil`, `%2F%2Fevil`,
   `javascript:alert(1)`, embedded tab/newline, `/ok?x=1#y` (kept), empty, very long. 100%
   coverage.
+
+**Notes (done 2026-10-21):**
+- Clients: `lib/api/public.ts` (`getPublicApi`) and `lib/api/session.ts` (`getSessionApi`),
+  both `import "server-only"` (package pinned at 0.0.1). The shared header logic is in
+  `lib/api/forwarding.ts`: `CONTEXT_HEADERS` (request id, trace, client-IP chain) and
+  `IDENTITY_HEADERS` (`cookie`, `authorization`). `forwardedHeaders` also deletes identity
+  headers passed in by the caller, so `getPublicApi(path, { headers: { Cookie } })` cannot
+  smuggle one through. `server.ts` is gone, and the home page moved to `app/(public)/`.
+- **Real-API proof:** a backend dev router (`app/api/v1/endpoints/dev.py`) is mounted only
+  when `ENVIRONMENT=local` and left out of the OpenAPI schema, so the generated web
+  contract stays production-only. `GET /api/v1/dev/echo-headers` returns *which* headers
+  arrived, never their values. `/dev/api-clients` (gallery flag) calls it through both
+  clients with a session cookie set: the public client's request had no cookie, the session
+  client's did. Backend tests: absent (404) for `staging`/`production`, present for `local`,
+  absent from `/openapi.json`, names-only response. The route checks are behavioural, not
+  `app.routes`, because FastAPI mounts included routers lazily. 3.10's form probe goes in the
+  same router.
+- Boundary check: `ops/ci/check_web_boundaries.mjs` walks static imports, re-exports,
+  dynamic `import()` and `require` with TypeScript's resolver (`@/` alias + relative),
+  breadth-first, and reports the shortest chain. It runs in CI's `web` job and in
+  `make web-check`. `web/lib/api/boundaries.test.ts` runs it on throwaway fixture trees:
+  direct import, a three-hop chain through components, a dynamic import, the allowed cases
+  and a cycle. A real probe (public page → component → session client) exited 1 with the
+  chain. The test loads the checker through Node's `require` (Node ≥ 22.12 can require ES
+  modules), because Vite refuses modules outside the web root.
+- Private surfaces: `app/dealer`, `app/account`, `app/admin` placeholders whose layouts are
+  `force-dynamic`. Middleware sets `Cache-Control: private, no-store` and
+  `X-Robots-Tag: noindex` on whole-segment matches (`isPrivatePath`, so `/dealers-near-me`
+  stays public). e2e checks all three plus a nested path, and that `/` has no `noindex`.
+- Identical HTML: the e2e test normalises the CSP nonce, the response's own `x-request-id`
+  (the home page prints it while the API is unavailable), and Sentry's
+  `sentry-trace`/`baggage` meta tags. Each is replaced by its exact value, never by a "any
+  UUID" pattern, which would also hide a leaked user id.
+- `safeNextPath`: refuses anything not starting with a single `/`, any backslash, control
+  characters (tab/CR/LF are stripped by browsers, turning `/	/evil` into `//evil`) and over
+  2,048 characters, then re-checks after URL normalisation (`/..//evil` → `//evil`). 26
+  cases, 100% gate. `lib/api/forwarding.ts` is gated at 100% too.
+- Local e2e on the standalone build (Docker down, so the API had no DB): all 7 new specs and
+  both CSP specs pass with `--workers=1`. Three parallel workers on 0.8 GB free gave
+  timeouts and resets. `foundation.spec.ts` still fails locally only because the API's
+  dependencies are down.
+- Not proven by a deliberate failure: removing the middleware header block (it would need
+  another 2–10 min build). The matcher is unit-tested, and the e2e specs would fail without
+  the headers.
 
 ---
 
