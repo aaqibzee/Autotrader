@@ -15,6 +15,8 @@ def export_openapi(output: Path = DEFAULT_OUTPUT) -> None:
     output.write_text(
         json.dumps(app.openapi(), indent=2, sort_keys=True) + '\n',
         encoding='utf-8',
+        # LF on every OS (playbook §4): Windows would otherwise write CRLF.
+        newline='\n',
     )
 
 

@@ -17,7 +17,7 @@ from app.core.api_middleware import (
     RequestContextMiddleware,
 )
 from app.core.config import Settings
-from app.core.errors import AppError, install_exception_handlers
+from app.core.errors import AppError, ProblemCode, install_exception_handlers
 from app.core.metrics import metrics_response
 
 
@@ -36,7 +36,7 @@ def isolated_client() -> Generator[TestClient, None, None]:
 
     @app.get('/app-error')
     async def app_error() -> None:
-        raise AppError('safe detail', code='bad_request')
+        raise AppError('safe detail', code=ProblemCode.BAD_REQUEST)
 
     @app.get('/validation')
     async def validation(value: int) -> dict[str, int]:

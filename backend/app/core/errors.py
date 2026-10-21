@@ -16,7 +16,14 @@ logger = structlog.get_logger(__name__)
 
 
 class ProblemCode(str, Enum):
+    """Every machine-readable `code` the API can return (Feature 01 §5).
+
+    Exported as an OpenAPI enum, so the web app's `problem-ui.ts` is a `Record` over it:
+    adding a member here fails the web typecheck until it has UI (Feature 03 A5).
+    """
+
     BAD_REQUEST = 'bad_request'
+    NOT_FOUND = 'not_found'
     INVALID_INPUT = 'invalid_input'
     STALE_UPDATE = 'stale_update'
     IDEMPOTENCY_KEY_REUSED = 'idempotency_key_reused'
@@ -25,6 +32,10 @@ class ProblemCode(str, Enum):
     DEALER_NOT_APPROVED = 'dealer_not_approved'
     PAGE_LIMIT_EXCEEDED = 'page_limit_exceeded'
     DEPENDENCY_UNAVAILABLE = 'dependency_unavailable'
+    # Raised by Feature 04's rate limiter (429 + Retry-After) and by integrations behind
+    # the shared HTTP client (503, "continue manually"), Features 05 and 12.
+    RATE_LIMITED = 'rate_limited'
+    INTEGRATION_UNAVAILABLE = 'integration_unavailable'
     INTERNAL_ERROR = 'internal_error'
 
 
@@ -42,7 +53,7 @@ class ProblemDetails(BaseModel):
     title: str
     status: int
     detail: str
-    code: str
+    code: ProblemCode
     request_id: str | None = None
     instance: str
     errors: list[ProblemValidationError] | None = None
@@ -54,7 +65,7 @@ PROBLEM_RESPONSES: dict[int | str, dict[str, Any]] = {
         'description': HTTPStatus(status).phrase,
         'content': {'application/problem+json': {}},
     }
-    for status in (400, 403, 404, 409, 413, 422, 500, 503)
+    for status in (400, 403, 404, 409, 413, 422, 429, 500, 503)
 }
 
 
@@ -63,13 +74,13 @@ class AppError(Exception):
         self,
         message: str,
         *,
-        code: ProblemCode | str = ProblemCode.BAD_REQUEST,
+        code: ProblemCode = ProblemCode.BAD_REQUEST,
         status_code: int = 400,
         extra: dict[str, Any] | None = None,
     ) -> None:
         self.message = message
         self.extra = extra or {}
-        self.code = code.value if isinstance(code, ProblemCode) else str(code)
+        self.code = code
         self.status_code = status_code
         super().__init__(message)
 
@@ -79,7 +90,7 @@ def problem_response(
     *,
     status_code: int,
     detail: str,
-    code: ProblemCode | str,
+    code: ProblemCode,
     title: str | None = None,
     errors: list[dict[str, str]] | None = None,
     extra: dict[str, Any] | None = None,
@@ -90,7 +101,7 @@ def problem_response(
         'title': title or HTTPStatus(status_code).phrase,
         'status': status_code,
         'detail': detail,
-        'code': code.value if isinstance(code, ProblemCode) else str(code),
+        'code': code.value,
         'request_id': request_id,
         'instance': request.url.path,
     }
@@ -106,6 +117,14 @@ def problem_response(
         media_type='application/problem+json',
         headers=headers,
     )
+
+
+def _code_for_status(status_code: int) -> ProblemCode:
+    """Code for a bare HTTPException (unknown route, method not allowed, ...). A 404 is
+    its own code, or the web app would show "bad request" for a missing page."""
+    if status_code == 404:
+        return ProblemCode.NOT_FOUND
+    return ProblemCode.BAD_REQUEST if status_code < 500 else ProblemCode.INTERNAL_ERROR
 
 
 def install_exception_handlers(app: FastAPI) -> None:
@@ -126,7 +145,7 @@ def install_exception_handlers(app: FastAPI) -> None:
             request,
             status_code=exc.status_code,
             detail=detail,
-            code=ProblemCode.BAD_REQUEST if exc.status_code < 500 else ProblemCode.INTERNAL_ERROR,
+            code=_code_for_status(exc.status_code),
             title=HTTPStatus(exc.status_code).phrase,
         )
 

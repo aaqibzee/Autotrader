@@ -93,10 +93,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ProblemCode
+         * @description Every machine-readable `code` the API can return (Feature 01 §5).
+         *
+         *     Exported as an OpenAPI enum, so the web app's `problem-ui.ts` is a `Record` over it:
+         *     adding a member here fails the web typecheck until it has UI (Feature 03 A5).
+         * @enum {string}
+         */
+        ProblemCode: "bad_request" | "not_found" | "invalid_input" | "stale_update" | "idempotency_key_reused" | "idempotency_in_progress" | "invalid_cursor" | "dealer_not_approved" | "page_limit_exceeded" | "dependency_unavailable" | "rate_limited" | "integration_unavailable" | "internal_error";
         /** ProblemDetails */
         ProblemDetails: {
-            /** Code */
-            code: string;
+            code: components["schemas"]["ProblemCode"];
             /** Detail */
             detail: string;
             /** Errors */
@@ -206,6 +214,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Internal Server Error */
             500: {
                 headers: {
@@ -293,6 +310,15 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -394,6 +420,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Internal Server Error */
             500: {
                 headers: {
@@ -488,6 +523,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Internal Server Error */
             500: {
                 headers: {
@@ -575,6 +619,15 @@ export interface operations {
             };
             /** @description Unprocessable Entity */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

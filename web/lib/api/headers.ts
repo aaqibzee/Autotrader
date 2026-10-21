@@ -1,6 +1,5 @@
-import type { ApiPath } from "./types";
-
-export function assertApiPath(path: string): asserts path is ApiPath {
+/** Same-origin `/api/v1/…` only, for every method (GET and mutation paths alike). */
+export function assertApiPath(path: string): asserts path is `/api/v1/${string}` {
 	let normalizedPath: string;
 	try {
 		normalizedPath = new URL(path, "http://same-origin.invalid").pathname;

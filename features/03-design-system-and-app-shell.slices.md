@@ -17,7 +17,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Built (2026-10-20); both CSP specs pass locally (2026-10-21); awaiting CI e2e |
 | 3.3 | First-load JS budget and lazy Sentry | 1.5 h | 3.2 | Done (2026-10-21) |
 | 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Done (2026-10-21) |
-| 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Not started |
+| 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Done (2026-10-21) |
 | 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Not started |
 | 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Not started |
 | 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Not started |
@@ -439,6 +439,53 @@ production server.
 - Timeout: a request that never resolves rejects with `ApiTimeoutError` at 10 s (fake
   timers); a caller abort still wins.
 - 100% coverage of `problem-ui.ts`.
+
+**Notes (done 2026-10-21):**
+- Backend: `ProblemCode` gains `NOT_FOUND`, `RATE_LIMITED`, `INTEGRATION_UNAVAILABLE`.
+  `ProblemDetails.code` is typed `ProblemCode`, so the OpenAPI schema exports the enum and
+  the web `ProblemCode` is a union. `problem_response` and `AppError` now take
+  `ProblemCode` only, not `ProblemCode | str`: a string code bypassed the enum, which is
+  the reader/writer gap A5 is about (one test passed `'bad_request'` as a string, fixed).
+  429 is documented on every route.
+- **Found:** every bare `HTTPException` below 500, including 404 for an unknown route,
+  returned `code: bad_request`, so the UI table would have shown "bad request" for a
+  missing page. `_code_for_status` now maps 404 to `not_found` (other 4xx stay
+  `bad_request`, 5xx `internal_error`).
+- `scripts/export_openapi.py` writes with `newline='
+'`: on Windows it wrote CRLF
+  (playbook §4). Git normalised it, but a local freshness diff would have been noisy.
+- `lib/api/error.ts`: `ApiError` gains `retryAfterSeconds` and `extensions` (every
+  non-RFC-9457 member, e.g. `current` on a 409). `parseRetryAfter` takes delta-seconds or an
+  IMF-fixdate, capped at 1 h and never negative. **Found:** `Date.parse` accepts `"-5"`
+  (the year −5) and `"1.5"`, so dates must match the RFC 9110 format before parsing.
+  `ApiError.code` stays `string`: a newer API may send a code this build does not know, and
+  the UI then falls back on the status.
+- `lib/api/response.ts` is the one request path. `timeoutMs` uses its own
+  `AbortController` and timer, not `AbortSignal.timeout`, so fake timers can drive it and a
+  timeout can be told apart from a caller's abort. Results: `ApiTimeoutError` (our limit),
+  `ApiNetworkError` (no response), or the caller's `AbortError` re-thrown unchanged, so a
+  cancelled request is never reported. The body is read inside the limit too. Browser
+  `getClientApi`/`mutateClientApi` use 10 s; SSR (`forwarding.ts`) uses 3 s through the
+  same mechanism, replacing `AbortSignal.timeout`.
+- Types: every helper in `lib/api/types.ts` takes the paths interface as a last type
+  parameter, so `types.test.ts` checks them against a fixture contract (no mutation
+  endpoints exist yet). `ApiPath` is now GET paths only. `mutateClientApi(method, path,
+  body, { idempotencyKey })` sets `Content-Type` only when there is a body.
+  `assertApiPath` narrows to `/api/v1/${string}` for every method.
+- `lib/api/problem-ui.ts`: `PROBLEM_UI: Record<ProblemCode, ProblemUi>` plus status
+  fallbacks (401 sign-in, 403 permission, 404, 409, 422, 429, 503, other 4xx invalid, 5xx
+  retryable), `TIMEOUT_UI`, `OFFLINE_UI`, and `problemUi(error)`, which also carries
+  `requestId` and `retryAfterSeconds`. For the generic codes (`bad_request`,
+  `internal_error`) the status decides, so a 403 raised as a bare `HTTPException` shows
+  "permission". The lookup uses `Object.hasOwn`, so a code such as `toString` is not
+  treated as known (tested).
+- Guard proven: adding a member to the generated `ProblemCode` union fails
+  `npm run typecheck` at `PROBLEM_UI` (reverted). The backend test asserts the exported
+  enum equals the Python enum.
+- Coverage: `problem-ui.ts` gated at 100%; every `lib/api` file is at 100% lines.
+- Backend not fully run: Docker was down, so the 4 tests that need live Postgres failed
+  (connection refused); the other 32 in `test_foundation_api.py`, the problem-contract tests
+  and the dev-route tests pass. CI runs the full suite.
 
 ---
 

@@ -28,6 +28,8 @@ export default defineConfig({
         // Feature 03 §3, §6: an open redirect or a forwarded cookie is a security bug.
         "lib/navigation/safe-next.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
         "lib/api/forwarding.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
+        // Feature 03 §3: every failure maps to exactly one UI; an untested branch is a raw error.
+        "lib/api/problem-ui.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
       },
     },
   },

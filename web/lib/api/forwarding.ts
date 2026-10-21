@@ -40,7 +40,9 @@ export function forwardedHeaders(
 	return outgoing;
 }
 
-/** SSR request to the internal API URL with the given headers (3 s bound, Feature 03 §3). */
+/** SSR request to the internal API URL with the given headers (Feature 03 §3). */
+export const SERVER_TIMEOUT_MS = 3_000;
+
 export function requestInternalApi<Path extends ApiPath>(
 	path: Path,
 	headers: Headers,
@@ -51,6 +53,6 @@ export function requestInternalApi<Path extends ApiPath>(
 	return requestApi<ApiResponse<Path>>(new URL(path, apiOrigin), {
 		...options,
 		headers,
-		signal: options.signal ?? AbortSignal.timeout(3_000),
+		timeoutMs: SERVER_TIMEOUT_MS,
 	});
 }

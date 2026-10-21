@@ -1,12 +1,31 @@
 {
   "components": {
     "schemas": {
+      "ProblemCode": {
+        "description": "Every machine-readable `code` the API can return (Feature 01 \u00a75).\n\nExported as an OpenAPI enum, so the web app's `problem-ui.ts` is a `Record` over it:\nadding a member here fails the web typecheck until it has UI (Feature 03 A5).",
+        "enum": [
+          "bad_request",
+          "not_found",
+          "invalid_input",
+          "stale_update",
+          "idempotency_key_reused",
+          "idempotency_in_progress",
+          "invalid_cursor",
+          "dealer_not_approved",
+          "page_limit_exceeded",
+          "dependency_unavailable",
+          "rate_limited",
+          "integration_unavailable",
+          "internal_error"
+        ],
+        "title": "ProblemCode",
+        "type": "string"
+      },
       "ProblemDetails": {
         "additionalProperties": true,
         "properties": {
           "code": {
-            "title": "Code",
-            "type": "string"
+            "$ref": "#/components/schemas/ProblemCode"
           },
           "detail": {
             "title": "Detail",
@@ -174,6 +193,16 @@
             },
             "description": "Unprocessable Entity"
           },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
           "500": {
             "content": {
               "application/problem+json": {
@@ -275,6 +304,16 @@
               }
             },
             "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Too Many Requests"
           },
           "500": {
             "content": {
@@ -381,6 +420,16 @@
             },
             "description": "Unprocessable Entity"
           },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
           "500": {
             "content": {
               "application/problem+json": {
@@ -486,6 +535,16 @@
             },
             "description": "Unprocessable Entity"
           },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
           "500": {
             "content": {
               "application/problem+json": {
@@ -590,6 +649,16 @@
               }
             },
             "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Too Many Requests"
           },
           "500": {
             "content": {
