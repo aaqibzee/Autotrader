@@ -83,7 +83,7 @@ and 13). Any personal data in that HTML would be served to the next visitor. So:
 ### 7. Rendering and bundle budget
 - Server components by default; `'use client'` only on interactive leaves (forms, sheet, gallery, islands)
 - **No runtime CSS-in-JS.** Tailwind only, so stylesheets and `<style>` elements work under Feature 01 §11's nonce-based CSP without `unsafe-inline`. Style *attributes* (which nonces cannot cover, and React Aria server-renders) are allowed via `style-src-attr 'unsafe-inline'`; `script-src` is unchanged (A2).
-- **First-load JS budget for the public shell: the measured framework floor (Next + React) + 30 KB gzipped**, checked in CI from the `next build` output. The original 90 KB was unachievable: the Feature 01 placeholder page already loads ~160 KB, `react-dom` alone 53 KB. The Sentry browser SDK loads after idle, not in the first-load bundle. Feature 13's 150 KB detail-page budget is re-checked against the same floor (A1).
+- **First-load JS budget for the public shell: 133 kB gzipped** = the measured framework floor of 103 kB (Next runtime 46.8, `react-dom` 54.2, other 2.3; Next 15.5.28 / React 19.1.0) + 30 kB for shell code, checked on every push by `ops/ci/check_bundle_budget.mjs` after `next build`. The original 90 KB was unachievable: the framework alone is 103 kB, and the Feature 01 placeholder loaded 165 kB with the eager Sentry SDK (+59 kB). The Sentry browser SDK now loads after idle, not in the first-load bundle (A1).
 - Images: plain `<img srcset>` against the pre-sized variants from Feature 06. **Next.js image optimisation is disabled** (`images.unoptimized`): it would re-encode photos on the shared VM's CPU, which Feature 06 already did once.
 
 ### 8. Accessibility baseline

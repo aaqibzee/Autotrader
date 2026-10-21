@@ -23,6 +23,8 @@ export default defineConfig({
         "lib/format/**": { lines: 100, functions: 100, branches: 100, statements: 100 },
         // Feature 03 §1: the contrast maths decides what ships, so it is fully covered.
         "styles/contrast.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
+        // Feature 03 A1: losing an early error, or reporting it twice, is silent in production.
+        "lib/observability/lazy-sentry.ts": { lines: 100, functions: 100, branches: 100, statements: 100 },
       },
     },
   },

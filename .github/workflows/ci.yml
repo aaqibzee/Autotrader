@@ -154,6 +154,8 @@ jobs:
       - name: Build
         working-directory: web
         run: npm run build
+      - name: First-load JS budget
+        run: node ops/ci/check_bundle_budget.mjs
 
   e2e:
     name: End-to-end smoke

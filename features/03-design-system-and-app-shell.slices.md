@@ -14,8 +14,8 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | # | Slice | Est. | Depends on | Status |
 |---|---|---|---|---|
 | 3.1 | Tokens, font, contrast test, web coverage scope | 1.5 h | — | Done (2026-10-20) |
-| 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Built (2026-10-20); awaiting the first CI e2e run |
-| 3.3 | First-load JS budget and lazy Sentry | 1.5 h | 3.2 | Not started |
+| 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Built (2026-10-20); both CSP specs pass locally (2026-10-21); awaiting CI e2e |
+| 3.3 | First-load JS budget and lazy Sentry | 1.5 h | 3.2 | Done (2026-10-21) |
 | 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Not started |
 | 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Not started |
 | 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Not started |
@@ -288,6 +288,46 @@ production server.
 - Negative proof: importing a large dependency into the root layout fails the budget check.
 - Record before/after totals in the notes; update design §7 and Feature 13's budget line
   with the measured numbers.
+
+**Notes (done 2026-10-21):**
+- **Measured** (`next build`, Next 15.5.28, React 19.1.0, gzip level 9, kB of 1,000 bytes as
+  `next build` prints them):
+
+  | Build | `/` first load | Shared by all |
+  |---|---:|---:|
+  | Before (eager Sentry) | 165 kB | 162 kB |
+  | Floor (Sentry client stubbed) | 107 kB | 103 kB (Next runtime 46.8, `react-dom` 54.2, other 2.3) |
+  | After (lazy Sentry) | **108 kB** | 104 kB |
+
+  The budget is 103 + 30 = **133 kB**. The checker's totals match `next build`'s own column
+  to the decimal on both builds, so the two can be compared directly.
+- `ops/ci/check_bundle_budget.mjs` reads `app-build-manifest.json`. It sums each page
+  route's unique first-load JS chunks, excluding `nomodule` polyfills, and gates the public
+  routes (`/dev`, `/dealer`, `/account`, `/admin` are printed but not gated). It writes a
+  route table and the heaviest route's chunks to the job summary. It refuses to pass when
+  it finds no public routes (a vacuous pass). `BUNDLE_BUDGET_KB` overrides the budget for
+  probes. Negative proof: budget 105 on the real build exits 1 naming `/` (107.7 kB); the
+  default exits 0. Runs in CI's `web` job after `npm run build`.
+- Lazy Sentry: `lib/observability/lazy-sentry.ts` (`startLazySentry`) is called from
+  `instrumentation-client.ts`. No inline stub script was needed: `instrumentation-client`
+  already runs before hydration from the main bundle, so the queue there catches
+  everything an inline script would. The design's "inline nonce'd stub" is dropped. With no
+  DSN (local, CI) the SDK is never downloaded. The first queued error triggers the load
+  instead of waiting for idle. The queue is capped at 20, and our listeners are removed on
+  init because the SDK installs its own (otherwise every error is reported twice).
+  Router transitions before init are not traced. 13 tests, file gated at 100%.
+- e2e (3.2) ran locally for the first time against the standalone server: both CSP specs
+  pass (production policy, guard catches the un-nonced `<style>`, allows style
+  attributes). `foundation.spec.ts` failed locally only because Docker Desktop had hung
+  (API readiness: db, redis and storage all unavailable; `docker ps` timed out). CI runs it
+  on fresh services.
+- **Found for later slices:** `/_not-found` is prerendered **static**, so its HTML carries
+  no CSP nonce and its scripts would be blocked under `strict-dynamic` (3.13 fixes it with
+  the branded 404, and its e2e will catch it). `@sentry/nextjs` enables Next's
+  `clientTraceMetadata` experiment, which can write per-request trace `<meta>` tags into
+  HTML; 3.4's "identical HTML for every visitor" test must normalise or disable them.
+- Local builds take 1.5–10 min and failed twice mid-build at 0.2–0.5 GB free (playbook §7);
+  `NODE_OPTIONS=--max-old-space-size=1536` (as `deploy.sh` uses) got them through.
 
 ---
 
