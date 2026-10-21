@@ -1,0 +1,7 @@
+# Known false positives, one exact gitleaks fingerprint per line (commit:file:rule:line).
+# Each entry suppresses that single finding in history only; the same pattern anywhere
+# else is still reported. Fix the source too (playbook §5: generate test values at runtime).
+
+# A test's fake Idempotency-Key literal ("key-12345678"), reformatted onto its own line by
+# prettier in 3915412. Replaced by crypto.randomUUID() in the next commit.
+3915412bbcfd5ccc8de2257ae51f6c66d5f5a66d:web/lib/api/response.test.ts:generic-api-key:187

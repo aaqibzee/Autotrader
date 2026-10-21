@@ -182,9 +182,12 @@ describe("mutateClientApi", () => {
   it("sends a JSON body, the method and the Idempotency-Key", async () => {
     const fetchMock = respond({ ok: true }, { status: 201 });
     vi.stubGlobal("fetch", fetchMock);
+    // Generated at runtime, never a literal: gitleaks reads `key: "<value>"` as a secret
+    // (playbook §5), and a real form generates a UUID too.
+    const idempotencyKey = crypto.randomUUID();
     await expect(
       mutateClientApi("post", path, { title: "Fiesta" } as never, {
-        idempotencyKey: "key-12345678",
+        idempotencyKey,
       }),
     ).resolves.toEqual({ ok: true });
 
@@ -196,7 +199,7 @@ describe("mutateClientApi", () => {
     expect(init.method).toBe("POST");
     expect(init.body).toBe('{"title":"Fiesta"}');
     expect(headers.get("content-type")).toBe("application/json");
-    expect(headers.get("idempotency-key")).toBe("key-12345678");
+    expect(headers.get("idempotency-key")).toBe(idempotencyKey);
     expect(headers.get("accept")).toContain("application/problem+json");
   });
 
