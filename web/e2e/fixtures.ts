@@ -21,13 +21,17 @@ export type CspViolation = {
  */
 export async function recordCspViolations(page: Page): Promise<CspViolation[]> {
   const violations: CspViolation[] = [];
-  await page.exposeBinding("__reportCspViolation", (_source, violation: CspViolation) => {
-    violations.push(violation);
-  });
+  await page.exposeBinding(
+    "__reportCspViolation",
+    (_source, violation: CspViolation) => {
+      violations.push(violation);
+    },
+  );
   await page.addInitScript(() => {
     document.addEventListener("securitypolicyviolation", (event) => {
-      const report = (window as unknown as { __reportCspViolation: (v: unknown) => void })
-        .__reportCspViolation;
+      const report = (
+        window as unknown as { __reportCspViolation: (v: unknown) => void }
+      ).__reportCspViolation;
       void report({
         directive: event.effectiveDirective,
         blockedUri: event.blockedURI,
@@ -52,7 +56,10 @@ export const test = base.extend<Fixtures>({
       const violations = await recordCspViolations(page);
       await use(violations);
       if (!allowCspViolations) {
-        expect(violations, "pages in this test reported CSP violations").toEqual([]);
+        expect(
+          violations,
+          "pages in this test reported CSP violations",
+        ).toEqual([]);
       }
     },
     { auto: true },

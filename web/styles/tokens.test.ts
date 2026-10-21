@@ -1,21 +1,33 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { contrastRatio, parseColourTokens, relativeLuminance } from "./contrast";
+import {
+  contrastRatio,
+  parseColourTokens,
+  relativeLuminance,
+} from "./contrast";
 import { DECORATIVE, MIN_RATIO, PAIRINGS, type Pairing } from "./pairings";
 
 const webRoot = path.resolve(__dirname, "..");
-const tokensCss = fs.readFileSync(path.join(webRoot, "styles", "tokens.css"), "utf8");
+const tokensCss = fs.readFileSync(
+  path.join(webRoot, "styles", "tokens.css"),
+  "utf8",
+);
 const tokens = parseColourTokens(tokensCss);
 
 /** Failures for a set of pairings, so the negative tests exercise the same rule. */
-function pairingFailures(pairings: readonly Pairing[], palette: Map<string, string>): string[] {
+function pairingFailures(
+  pairings: readonly Pairing[],
+  palette: Map<string, string>,
+): string[] {
   return pairings.flatMap(([fg, bg, kind]) => {
     const fgHex = palette.get(fg);
     const bgHex = palette.get(bg);
     if (!fgHex || !bgHex) return [`${fg} on ${bg}: unknown token`];
     const ratio = contrastRatio(fgHex, bgHex);
-    return ratio < MIN_RATIO[kind] ? [`${fg} on ${bg} (${kind}): ${ratio.toFixed(2)}:1`] : [];
+    return ratio < MIN_RATIO[kind]
+      ? [`${fg} on ${bg} (${kind}): ${ratio.toFixed(2)}:1`]
+      : [];
   });
 }
 
@@ -35,12 +47,18 @@ describe("contrast maths", () => {
 
 describe("token parser", () => {
   it("rejects a token that is not hex, so it cannot escape the check", () => {
-    expect(() => parseColourTokens("--color-ink: oklch(0.2 0.01 160);")).toThrow(/must be a hex/);
-    expect(() => parseColourTokens("--color-ink: var(--other);")).toThrow(/must be a hex/);
+    expect(() =>
+      parseColourTokens("--color-ink: oklch(0.2 0.01 160);"),
+    ).toThrow(/must be a hex/);
+    expect(() => parseColourTokens("--color-ink: var(--other);")).toThrow(
+      /must be a hex/,
+    );
   });
 
   it("rejects a duplicate token", () => {
-    expect(() => parseColourTokens("--color-a: #000; --color-a: #fff;")).toThrow(/twice/);
+    expect(() =>
+      parseColourTokens("--color-a: #000; --color-a: #fff;"),
+    ).toThrow(/twice/);
   });
 
   it("skips the palette reset", () => {
@@ -66,12 +84,16 @@ describe("design tokens (Feature 03 §1, A15)", () => {
 
   it("every colour token is paired or declared decorative", () => {
     const used = new Set(PAIRINGS.flatMap(([fg, bg]) => [fg, bg]));
-    const unpaired = [...tokens.keys()].filter((name) => !used.has(name) && !(name in DECORATIVE));
+    const unpaired = [...tokens.keys()].filter(
+      (name) => !used.has(name) && !(name in DECORATIVE),
+    );
     expect(unpaired).toEqual([]);
   });
 
   it("decorative tokens exist", () => {
-    expect(Object.keys(DECORATIVE).filter((name) => !tokens.has(name))).toEqual([]);
+    expect(Object.keys(DECORATIVE).filter((name) => !tokens.has(name))).toEqual(
+      [],
+    );
   });
 
   // Negative proofs: the rule above must be able to fail.
@@ -99,22 +121,31 @@ describe("no colour outside the tokens", () => {
   const skipDirs = new Set(["node_modules", ".next", "coverage"]);
   // A Tailwind arbitrary value holding a colour (`text-[#71972a]`, `shadow-[0_1px_rgba(…)]`,
   // `bg-[var(--x)]`) bypasses the cleared palette, so it is banned in source.
-  const ARBITRARY_COLOUR = /-\[[^\]\s]*(?:#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(|var\(--)/i;
+  const ARBITRARY_COLOUR =
+    /-\[[^\]\s]*(?:#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(|var\(--)/i;
   const CSS_COLOUR_LITERAL = /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(/i;
 
   function sourceFiles(dir: string): string[] {
     if (!fs.existsSync(dir)) return [];
     return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) return skipDirs.has(entry.name) ? [] : sourceFiles(full);
-      return /\.(tsx?|css)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [full] : [];
+      if (entry.isDirectory())
+        return skipDirs.has(entry.name) ? [] : sourceFiles(full);
+      return /\.(tsx?|css)$/.test(entry.name) &&
+        !/\.test\.tsx?$/.test(entry.name)
+        ? [full]
+        : [];
     });
   }
 
-  const files = sourceDirs.flatMap((dir) => sourceFiles(path.join(webRoot, dir)));
+  const files = sourceDirs.flatMap((dir) =>
+    sourceFiles(path.join(webRoot, dir)),
+  );
 
   it("scans the source tree", () => {
-    expect(files.some((file) => file.endsWith(path.join("app", "layout.tsx")))).toBe(true);
+    expect(
+      files.some((file) => file.endsWith(path.join("app", "layout.tsx"))),
+    ).toBe(true);
   });
 
   it("no Tailwind arbitrary colour values in components", () => {
@@ -125,7 +156,9 @@ describe("no colour outside the tokens", () => {
           .readFileSync(file, "utf8")
           .split("\n")
           .flatMap((line, i) =>
-            ARBITRARY_COLOUR.test(line) ? [`${path.relative(webRoot, file)}:${i + 1}`] : [],
+            ARBITRARY_COLOUR.test(line)
+              ? [`${path.relative(webRoot, file)}:${i + 1}`]
+              : [],
           ),
       );
     expect(offenders).toEqual([]);
@@ -147,6 +180,8 @@ describe("no colour outside the tokens", () => {
     ]) {
       expect(ARBITRARY_COLOUR.test(sample), sample).toBe(true);
     }
-    expect(ARBITRARY_COLOUR.test('className="w-[min(100%-40px,1160px)]"')).toBe(false);
+    expect(ARBITRARY_COLOUR.test('className="w-[min(100%-40px,1160px)]"')).toBe(
+      false,
+    );
   });
 });

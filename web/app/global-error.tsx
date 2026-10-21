@@ -24,7 +24,9 @@ export default function GlobalError({
     <html lang="en-GB">
       <body className="font-sans">
         <main className="shell flex min-h-screen flex-col items-start justify-center">
-          <h1 className="text-4xl font-semibold tracking-tight">We could not load this page.</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">
+            We could not load this page.
+          </h1>
           <p className="mt-3 text-ink-muted">Please try again in a moment.</p>
           <button
             className="mt-6 border border-ink px-4 py-2 text-sm font-semibold hover:bg-ink hover:text-surface"
@@ -34,7 +36,9 @@ export default function GlobalError({
             Try again
           </button>
           {error.digest && (
-            <p className="mt-4 font-mono text-xs text-ink-muted">Reference: {error.digest}</p>
+            <p className="mt-4 font-mono text-xs text-ink-muted">
+              Reference: {error.digest}
+            </p>
           )}
         </main>
       </body>

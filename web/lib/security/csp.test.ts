@@ -13,7 +13,11 @@ function directives(policy: string): Record<string, string> {
 describe("buildContentSecurityPolicy", () => {
   it("produces exactly the production directive set", () => {
     // Asserting the whole policy means any widening shows up as a diff in review.
-    expect(directives(buildContentSecurityPolicy({ nonce: "abc", development: false }))).toEqual({
+    expect(
+      directives(
+        buildContentSecurityPolicy({ nonce: "abc", development: false }),
+      ),
+    ).toEqual({
       "default-src": "'self'",
       "script-src": "'self' 'nonce-abc' 'strict-dynamic'",
       "style-src": "'self' 'nonce-abc'",
@@ -30,15 +34,21 @@ describe("buildContentSecurityPolicy", () => {
   });
 
   it("allows inline style attributes only, never inline style elements (A2)", () => {
-    const policy = directives(buildContentSecurityPolicy({ nonce: "abc", development: false }));
+    const policy = directives(
+      buildContentSecurityPolicy({ nonce: "abc", development: false }),
+    );
     expect(policy["style-src-elem"]).not.toContain("unsafe-inline");
     expect(policy["style-src"]).not.toContain("unsafe-inline");
     expect(policy["script-src"]).not.toContain("unsafe-inline");
   });
 
   it("adds unsafe-eval to scripts in development only", () => {
-    const dev = directives(buildContentSecurityPolicy({ nonce: "abc", development: true }));
-    expect(dev["script-src"]).toBe("'self' 'nonce-abc' 'strict-dynamic' 'unsafe-eval'");
+    const dev = directives(
+      buildContentSecurityPolicy({ nonce: "abc", development: true }),
+    );
+    expect(dev["script-src"]).toBe(
+      "'self' 'nonce-abc' 'strict-dynamic' 'unsafe-eval'",
+    );
   });
 
   it("adds configured origins to their directives", () => {
@@ -51,7 +61,9 @@ describe("buildContentSecurityPolicy", () => {
         uploadsBucketOrigin: "https://uploads.example.test",
       }),
     );
-    expect(policy["img-src"]).toBe("'self' data: blob: https://img.example.test");
+    expect(policy["img-src"]).toBe(
+      "'self' data: blob: https://img.example.test",
+    );
     expect(policy["connect-src"]).toBe(
       "'self' https://ingest.example.test https://uploads.example.test",
     );

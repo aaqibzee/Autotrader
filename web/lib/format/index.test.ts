@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatMileage, formatPrice, formatRelativeTime } from "./index";
+import {
+  formatDate,
+  formatMileage,
+  formatPrice,
+  formatRelativeTime,
+} from "./index";
 
 describe("formatPrice", () => {
   it("omits pence for whole pounds", () => {
@@ -59,7 +64,9 @@ describe("formatRelativeTime", () => {
 
   it("describes past times", () => {
     expect(formatRelativeTime("2026-10-11T12:00:00Z", now)).toBe("3 days ago");
-    expect(formatRelativeTime("2026-10-14T11:59:30Z", now)).toBe("30 seconds ago");
+    expect(formatRelativeTime("2026-10-14T11:59:30Z", now)).toBe(
+      "30 seconds ago",
+    );
     expect(formatRelativeTime("2026-09-30T12:00:00Z", now)).toBe("2 weeks ago");
     expect(formatRelativeTime("2025-10-14T12:00:00Z", now)).toBe("1 year ago");
   });

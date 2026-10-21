@@ -37,7 +37,8 @@ export const MAX_QUEUED_ERRORS = 20;
 export function startLazySentry(options: LazySentryOptions): LazySentry {
   const { dsn, target } = options;
   // No DSN means Sentry is disabled (local, CI): never download the SDK at all.
-  if (!dsn) return { onRouterTransitionStart: () => {}, ready: Promise.resolve() };
+  if (!dsn)
+    return { onRouterTransitionStart: () => {}, ready: Promise.resolve() };
 
   const queued: unknown[] = [];
   let sdk: SentryModule | undefined;
@@ -45,8 +46,10 @@ export function startLazySentry(options: LazySentryOptions): LazySentry {
 
   const onError = (event: Event) => {
     const error = "error" in event ? (event as ErrorEvent).error : undefined;
-    const reason = "reason" in event ? (event as PromiseRejectionEvent).reason : undefined;
-    if (queued.length < MAX_QUEUED_ERRORS) queued.push(error ?? reason ?? event);
+    const reason =
+      "reason" in event ? (event as PromiseRejectionEvent).reason : undefined;
+    if (queued.length < MAX_QUEUED_ERRORS)
+      queued.push(error ?? reason ?? event);
     void load();
   };
 

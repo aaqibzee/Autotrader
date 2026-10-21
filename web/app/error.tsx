@@ -19,7 +19,9 @@ export default function RouteError({
       <p className="font-mono text-xs uppercase tracking-[0.14em] text-ink-muted">
         Something went wrong
       </p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight">We could not load this page.</h1>
+      <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+        We could not load this page.
+      </h1>
       <button
         className="mt-6 border border-ink px-4 py-2 text-sm font-semibold transition-colors hover:bg-ink hover:text-surface"
         onClick={reset}
@@ -28,7 +30,9 @@ export default function RouteError({
         Try again
       </button>
       {error.digest && (
-        <p className="mt-4 font-mono text-xs text-ink-muted">Reference: {error.digest}</p>
+        <p className="mt-4 font-mono text-xs text-ink-muted">
+          Reference: {error.digest}
+        </p>
       )}
     </main>
   );

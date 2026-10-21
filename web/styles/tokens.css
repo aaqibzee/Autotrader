@@ -66,7 +66,8 @@
   --radius-xl: 1rem;
 
   --shadow-*: initial;
-  --shadow-card: 0 1px 2px rgb(17 24 22 / 0.06), 0 4px 16px rgb(17 24 22 / 0.06);
+  --shadow-card:
+    0 1px 2px rgb(17 24 22 / 0.06), 0 4px 16px rgb(17 24 22 / 0.06);
   --shadow-overlay: 0 12px 48px rgb(17 24 22 / 0.18);
 }
 

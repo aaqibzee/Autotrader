@@ -17,11 +17,17 @@ export type CspOptions = {
 };
 
 /** An origin from config, or undefined: https only, except loopback for local dev. */
-export function configuredOrigin(value: string | undefined): string | undefined {
+export function configuredOrigin(
+  value: string | undefined,
+): string | undefined {
   if (!value) return undefined;
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+    if (
+      url.protocol !== "https:" &&
+      url.hostname !== "localhost" &&
+      url.hostname !== "127.0.0.1"
+    ) {
       return undefined;
     }
     return url.origin;

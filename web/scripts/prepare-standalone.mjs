@@ -6,21 +6,31 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const webRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const standalone = path.join(webRoot, ".next", "standalone");
 
 if (!fs.existsSync(path.join(standalone, "server.js"))) {
-	console.error(`No standalone build at ${standalone}: run "next build" first.`);
-	process.exit(1);
+  console.error(
+    `No standalone build at ${standalone}: run "next build" first.`,
+  );
+  process.exit(1);
 }
 
 const copies = [
-	[path.join(webRoot, ".next", "static"), path.join(standalone, ".next", "static")],
-	[path.join(webRoot, "public"), path.join(standalone, "public")],
+  [
+    path.join(webRoot, ".next", "static"),
+    path.join(standalone, ".next", "static"),
+  ],
+  [path.join(webRoot, "public"), path.join(standalone, "public")],
 ];
 for (const [from, to] of copies) {
-	if (!fs.existsSync(from)) continue;
-	fs.rmSync(to, { recursive: true, force: true });
-	fs.cpSync(from, to, { recursive: true });
-	console.log(`copied ${path.relative(webRoot, from)} -> ${path.relative(webRoot, to)}`);
+  if (!fs.existsSync(from)) continue;
+  fs.rmSync(to, { recursive: true, force: true });
+  fs.cpSync(from, to, { recursive: true });
+  console.log(
+    `copied ${path.relative(webRoot, from)} -> ${path.relative(webRoot, to)}`,
+  );
 }

@@ -1,7 +1,9 @@
 import { expect, test } from "./fixtures";
 
 test.describe("Content Security Policy (Feature 03 slice 3.2)", () => {
-  test("pages are served by a production build with the split style policy", async ({ page }) => {
+  test("pages are served by a production build with the split style policy", async ({
+    page,
+  }) => {
     const response = await page.goto("/");
     const policy = response?.headers()["content-security-policy"] ?? "";
 
@@ -19,17 +21,24 @@ test.describe("Content Security Policy (Feature 03 slice 3.2)", () => {
       cspViolations,
     }) => {
       await page.goto("/dev/csp-probe");
-      await expect(page.getByRole("heading", { name: "CSP probe" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "CSP probe" }),
+      ).toBeVisible();
 
       // The policy did its job in the browser, not only in the header.
       await expect(page.getByTestId("blocked-element")).not.toHaveCSS(
         "text-decoration-line",
         "underline",
       );
-      await expect(page.getByTestId("allowed-attribute")).toHaveCSS("font-weight", "700");
+      await expect(page.getByTestId("allowed-attribute")).toHaveCSS(
+        "font-weight",
+        "700",
+      );
 
       // ...and the guard saw it: one blocked element, no attribute reports.
-      await expect.poll(() => cspViolations.map((v) => v.directive)).toEqual(["style-src-elem"]);
+      await expect
+        .poll(() => cspViolations.map((v) => v.directive))
+        .toEqual(["style-src-elem"]);
     });
   });
 });

@@ -21,7 +21,10 @@ export function middleware(request: NextRequest) {
   // One id per page render, forwarded on SSR -> API calls (lib/api/forwarding.ts) and tagged on
   // error reports, so a broken page can be traced through the API logs.
   const incomingId = request.headers.get("x-request-id");
-  const requestId = incomingId && REQUEST_ID.test(incomingId) ? incomingId : crypto.randomUUID();
+  const requestId =
+    incomingId && REQUEST_ID.test(incomingId)
+      ? incomingId
+      : crypto.randomUUID();
   requestHeaders.set("x-request-id", requestId);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });

@@ -38,7 +38,9 @@ function asDate(value: Date | string): Date {
 /** Money is always integer pence end to end; anything else is an upstream bug. */
 export function formatPrice(pence: number): string {
   if (!Number.isSafeInteger(pence)) {
-    throw new RangeError(`formatPrice expects integer pence, received ${pence}`);
+    throw new RangeError(
+      `formatPrice expects integer pence, received ${pence}`,
+    );
   }
   const formatter = pence % 100 === 0 ? GBP_WHOLE : GBP_WITH_PENCE;
   return formatter.format(pence / 100);
@@ -46,7 +48,9 @@ export function formatPrice(pence: number): string {
 
 export function formatMileage(miles: number): string {
   if (!Number.isFinite(miles) || miles < 0) {
-    throw new RangeError(`formatMileage expects a non-negative number, received ${miles}`);
+    throw new RangeError(
+      `formatMileage expects a non-negative number, received ${miles}`,
+    );
   }
   return `${MILEAGE_FORMATTER.format(miles)} miles`;
 }
@@ -55,7 +59,10 @@ export function formatDate(value: Date | string): string {
   return DATE_FORMATTER.format(asDate(value));
 }
 
-export function formatRelativeTime(value: Date | string, now: Date = new Date()): string {
+export function formatRelativeTime(
+  value: Date | string,
+  now: Date = new Date(),
+): string {
   const deltaSeconds = (asDate(value).getTime() - now.getTime()) / 1000;
   const absoluteSeconds = Math.abs(deltaSeconds);
   const units: Array<[Intl.RelativeTimeFormatUnit, number]> = [
@@ -67,8 +74,13 @@ export function formatRelativeTime(value: Date | string, now: Date = new Date())
     ["minute", 60],
     ["second", 1],
   ];
-  const [unit, secondsPerUnit] = units.find(([, seconds]) => absoluteSeconds >= seconds) ?? ["second", 1];
+  const [unit, secondsPerUnit] = units.find(
+    ([, seconds]) => absoluteSeconds >= seconds,
+  ) ?? ["second", 1];
   const valueInUnits = Math.round(deltaSeconds / secondsPerUnit);
 
-  return new Intl.RelativeTimeFormat("en-GB", { numeric: "always" }).format(valueInUnits, unit);
+  return new Intl.RelativeTimeFormat("en-GB", { numeric: "always" }).format(
+    valueInUnits,
+    unit,
+  );
 }

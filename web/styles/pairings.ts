@@ -11,9 +11,17 @@
  */
 export type PairingKind = "body" | "large" | "ui";
 
-export type Pairing = readonly [foreground: string, background: string, kind: PairingKind];
+export type Pairing = readonly [
+  foreground: string,
+  background: string,
+  kind: PairingKind,
+];
 
-export const MIN_RATIO: Record<PairingKind, number> = { body: 4.5, large: 3, ui: 3 };
+export const MIN_RATIO: Record<PairingKind, number> = {
+  body: 4.5,
+  large: 3,
+  ui: 3,
+};
 
 const TEXT_BACKGROUNDS = ["surface", "canvas"] as const;
 
@@ -45,10 +53,12 @@ export const PAIRINGS: readonly Pairing[] = [
   ["brand", "surface", "ui"],
 
   // Semantic messages: text on its tint, and the strong colour as text on white.
-  ...(["success", "warning", "danger", "info"] as const).flatMap((tone): Pairing[] => [
-    [tone, `${tone}-tint`, "body"],
-    [tone, "surface", "body"],
-  ]),
+  ...(["success", "warning", "danger", "info"] as const).flatMap(
+    (tone): Pairing[] => [
+      [tone, `${tone}-tint`, "body"],
+      [tone, "surface", "body"],
+    ],
+  ),
 
   // Price indicator badges.
   ...(["great", "good", "fair", "high", "none"] as const).map(

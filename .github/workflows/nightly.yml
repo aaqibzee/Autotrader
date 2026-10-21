@@ -3,9 +3,9 @@ name: Nightly
 # Scale proof (Feature 02 §8, slice 2.9): seed timings and the listing query budget,
 # measured on the same runner class every night. Feature 07 adds its search queries to
 # scripts/check_query_plans.py, which this job already runs.
-'on':
+"on":
   schedule:
-    - cron: '30 3 * * *'
+    - cron: "30 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
         run: docker compose up -d --wait postgres
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true

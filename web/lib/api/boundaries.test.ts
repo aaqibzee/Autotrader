@@ -33,15 +33,20 @@ function fixture(files: Record<string, string>): string {
   return root;
 }
 
-const SESSION = { "lib/api/session.ts": "export const getSessionApi = () => {};\n" };
-const PUBLIC = { "lib/api/public.ts": "export const getPublicApi = () => {};\n" };
+const SESSION = {
+  "lib/api/session.ts": "export const getSessionApi = () => {};\n",
+};
+const PUBLIC = {
+  "lib/api/public.ts": "export const getPublicApi = () => {};\n",
+};
 
 function check(files: Record<string, string>) {
   return findBoundaryViolations(fixture(files), { typescriptFrom: webRoot });
 }
 
 afterEach(() => {
-  for (const root of fixtures.splice(0)) fs.rmSync(root, { recursive: true, force: true });
+  for (const root of fixtures.splice(0))
+    fs.rmSync(root, { recursive: true, force: true });
 });
 
 describe("check_web_boundaries (Feature 03 A4)", () => {
@@ -52,17 +57,23 @@ describe("check_web_boundaries (Feature 03 A4)", () => {
   it("flags a public page importing the session client directly", () => {
     const violations = check({
       ...SESSION,
-      "app/(public)/page.tsx": 'import { getSessionApi } from "@/lib/api/session";\n',
+      "app/(public)/page.tsx":
+        'import { getSessionApi } from "@/lib/api/session";\n',
     });
-    expect(violations.map((v) => v.chain)).toEqual([["app/(public)/page.tsx", "lib/api/session.ts"]]);
+    expect(violations.map((v) => v.chain)).toEqual([
+      ["app/(public)/page.tsx", "lib/api/session.ts"],
+    ]);
   });
 
   it("flags a chain through a shared component, with relative and alias imports", () => {
     const violations = check({
       ...SESSION,
-      "app/(public)/cars/page.tsx": 'import { Card } from "../../../components/card";\n',
-      "components/card.tsx": 'export { Header as Card } from "@/components/header";\n',
-      "components/header.tsx": 'import "@/lib/api/session";\nexport const Header = 1;\n',
+      "app/(public)/cars/page.tsx":
+        'import { Card } from "../../../components/card";\n',
+      "components/card.tsx":
+        'export { Header as Card } from "@/components/header";\n',
+      "components/header.tsx":
+        'import "@/lib/api/session";\nexport const Header = 1;\n',
     });
     expect(violations.map((v) => v.chain)).toEqual([
       [
@@ -77,7 +88,8 @@ describe("check_web_boundaries (Feature 03 A4)", () => {
   it("flags dynamic imports", () => {
     const violations = check({
       ...SESSION,
-      "app/(public)/page.tsx": 'export const load = () => import("@/lib/api/session");\n',
+      "app/(public)/page.tsx":
+        'export const load = () => import("@/lib/api/session");\n',
     });
     expect(violations).toHaveLength(1);
   });
@@ -87,8 +99,10 @@ describe("check_web_boundaries (Feature 03 A4)", () => {
       check({
         ...SESSION,
         ...PUBLIC,
-        "app/(public)/page.tsx": 'import { getPublicApi } from "@/lib/api/public";\n',
-        "app/dealer/page.tsx": 'import { getSessionApi } from "@/lib/api/session";\n',
+        "app/(public)/page.tsx":
+          'import { getPublicApi } from "@/lib/api/public";\n',
+        "app/dealer/page.tsx":
+          'import { getSessionApi } from "@/lib/api/session";\n',
       }),
     ).toEqual([]);
   });

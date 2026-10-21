@@ -6,11 +6,12 @@ import { requestApi } from "./response";
 // `fetch` is stubbed: these tests are about what the client does with a response it gets
 // (or never gets). The real API is exercised by the e2e suite.
 function respond(body: unknown, init: ResponseInit = {}) {
-  return vi.fn(async () =>
-    new Response(body === undefined ? null : JSON.stringify(body), {
-      headers: { "content-type": "application/json" },
-      ...init,
-    }),
+  return vi.fn(
+    async () =>
+      new Response(body === undefined ? null : JSON.stringify(body), {
+        headers: { "content-type": "application/json" },
+        ...init,
+      }),
   );
 }
 
@@ -19,7 +20,8 @@ function hang() {
   return vi.fn(
     (_input: RequestInfo | URL, init?: RequestInit) =>
       new Promise<Response>((_resolve, reject) => {
-        const abort = () => reject(new DOMException("The operation was aborted.", "AbortError"));
+        const abort = () =>
+          reject(new DOMException("The operation was aborted.", "AbortError"));
         if (init?.signal?.aborted) abort();
         init?.signal?.addEventListener("abort", abort);
       }),
@@ -33,9 +35,9 @@ afterEach(() => {
 
 describe("client API boundary", () => {
   it("rejects paths that could escape the same-origin API route", () => {
-    expect(() => getClientApi("https://example.com/api/v1/health" as never)).toThrow(
-      "API paths must be same-origin /api/v1 routes",
-    );
+    expect(() =>
+      getClientApi("https://example.com/api/v1/health" as never),
+    ).toThrow("API paths must be same-origin /api/v1 routes");
     expect(() => getClientApi("/api/v1/../admin" as never)).toThrow(
       "API paths must be same-origin /api/v1 routes",
     );
@@ -45,8 +47,17 @@ describe("client API boundary", () => {
     vi.stubGlobal(
       "fetch",
       respond(
-        { type: "about:blank", title: "Conflict", status: 409, code: "stale_update", request_id: "req-123" },
-        { status: 409, headers: { "content-type": "application/problem+json" } },
+        {
+          type: "about:blank",
+          title: "Conflict",
+          status: 409,
+          code: "stale_update",
+          request_id: "req-123",
+        },
+        {
+          status: 409,
+          headers: { "content-type": "application/problem+json" },
+        },
       ),
     );
 
@@ -64,7 +75,10 @@ describe("client API boundary", () => {
       "fetch",
       respond(
         { title: "Too Many Requests", code: "rate_limited" },
-        { status: 429, headers: { "retry-after": "42", "x-request-id": "req-hdr" } },
+        {
+          status: 429,
+          headers: { "retry-after": "42", "x-request-id": "req-hdr" },
+        },
       ),
     );
     await expect(getClientApi("/api/v1/health/ready")).rejects.toMatchObject({
@@ -76,14 +90,21 @@ describe("client API boundary", () => {
 
   it("returns the JSON body, and undefined for 204", async () => {
     vi.stubGlobal("fetch", respond({ status: "ready" }));
-    await expect(getClientApi("/api/v1/health/ready")).resolves.toEqual({ status: "ready" });
+    await expect(getClientApi("/api/v1/health/ready")).resolves.toEqual({
+      status: "ready",
+    });
     vi.stubGlobal("fetch", respond(undefined, { status: 204 }));
     await expect(getClientApi("/api/v1/health/ready")).resolves.toBeUndefined();
   });
 
   it("refuses a non-JSON success body", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("<html>")));
-    await expect(getClientApi("/api/v1/health/ready")).rejects.toThrow("non-JSON");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("<html>")),
+    );
+    await expect(getClientApi("/api/v1/health/ready")).rejects.toThrow(
+      "non-JSON",
+    );
   });
 });
 
@@ -103,7 +124,9 @@ describe("time limits and failures (Feature 03 §3, A6, A7)", () => {
 
   it("does not time out a request that answers in time", async () => {
     vi.stubGlobal("fetch", respond({ status: "ready" }));
-    await expect(getClientApi("/api/v1/health/ready")).resolves.toEqual({ status: "ready" });
+    await expect(getClientApi("/api/v1/health/ready")).resolves.toEqual({
+      status: "ready",
+    });
     // The timer was cleared: advancing past the limit changes nothing.
     await vi.advanceTimersByTimeAsync(CLIENT_TIMEOUT_MS * 2);
   });
@@ -111,7 +134,9 @@ describe("time limits and failures (Feature 03 §3, A6, A7)", () => {
   it("re-throws the caller's own abort unchanged, never as a failure", async () => {
     vi.stubGlobal("fetch", hang());
     const controller = new AbortController();
-    const request = getClientApi("/api/v1/health/ready", { signal: controller.signal });
+    const request = getClientApi("/api/v1/health/ready", {
+      signal: controller.signal,
+    });
     controller.abort();
     await expect(request).rejects.toMatchObject({ name: "AbortError" });
   });
@@ -119,14 +144,19 @@ describe("time limits and failures (Feature 03 §3, A6, A7)", () => {
   it("honours a signal that was aborted before the call", async () => {
     vi.stubGlobal("fetch", hang());
     const signal = AbortSignal.abort();
-    await expect(getClientApi("/api/v1/health/ready", { signal })).rejects.toMatchObject({
+    await expect(
+      getClientApi("/api/v1/health/ready", { signal }),
+    ).rejects.toMatchObject({
       name: "AbortError",
     });
   });
 
   it("wraps a failed connection as ApiNetworkError", async () => {
     const cause = new TypeError("Failed to fetch");
-    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(cause)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(cause)),
+    );
     await expect(getClientApi("/api/v1/health/ready")).rejects.toMatchObject({
       name: "ApiNetworkError",
       cause,
@@ -153,10 +183,15 @@ describe("mutateClientApi", () => {
     const fetchMock = respond({ ok: true }, { status: 201 });
     vi.stubGlobal("fetch", fetchMock);
     await expect(
-      mutateClientApi("post", path, { title: "Fiesta" } as never, { idempotencyKey: "key-12345678" }),
+      mutateClientApi("post", path, { title: "Fiesta" } as never, {
+        idempotencyKey: "key-12345678",
+      }),
     ).resolves.toEqual({ ok: true });
 
-    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
     const headers = new Headers(init.headers);
     expect(init.method).toBe("POST");
     expect(init.body).toBe('{"title":"Fiesta"}');
@@ -169,7 +204,10 @@ describe("mutateClientApi", () => {
     const fetchMock = respond(undefined, { status: 204 });
     vi.stubGlobal("fetch", fetchMock);
     await mutateClientApi("delete", path, undefined as never);
-    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
     expect(init.method).toBe("DELETE");
     expect(init.body).toBeUndefined();
     expect(new Headers(init.headers).get("content-type")).toBeNull();
@@ -179,9 +217,9 @@ describe("mutateClientApi", () => {
   it("applies the same time limit", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("fetch", hang());
-    const outcome = expect(mutateClientApi("patch", path, {} as never)).rejects.toBeInstanceOf(
-      ApiTimeoutError,
-    );
+    const outcome = expect(
+      mutateClientApi("patch", path, {} as never),
+    ).rejects.toBeInstanceOf(ApiTimeoutError);
     await vi.advanceTimersByTimeAsync(CLIENT_TIMEOUT_MS);
     await outcome;
   });

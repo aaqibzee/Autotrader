@@ -17,14 +17,15 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-autotrader}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-postgres-password}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./ops/postgres/00-extensions.sql:/docker-entrypoint-initdb.d/00-extensions.sql:ro
       - ./ops/postgres/roles.sql:/docker-entrypoint-initdb.d/01-roles.sql:ro
       - ./ops/postgres/roles.sql:/opt/autotrader/roles.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      test:
+        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 3s
       retries: 12
@@ -36,15 +37,15 @@ services:
     command:
       - redis-server
       - --appendonly
-      - 'no'
+      - "no"
       - --maxmemory
       - 256mb
       - --maxmemory-policy
       - noeviction
     ports:
-      - '${REDIS_BROKER_PORT:-6379}:6379'
+      - "${REDIS_BROKER_PORT:-6379}:6379"
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 12
@@ -55,15 +56,15 @@ services:
     command:
       - redis-server
       - --appendonly
-      - 'no'
+      - "no"
       - --maxmemory
       - 256mb
       - --maxmemory-policy
       - allkeys-lru
     ports:
-      - '${REDIS_CACHE_PORT:-6380}:6379'
+      - "${REDIS_CACHE_PORT:-6380}:6379"
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 12
@@ -72,7 +73,7 @@ services:
   object-storage:
     image: chrislusf/seaweedfs:3.97
     restart: unless-stopped
-    entrypoint: ['/bin/sh', '/opt/autotrader/start.sh']
+    entrypoint: ["/bin/sh", "/opt/autotrader/start.sh"]
     environment:
       S3_ROOT_ACCESS_KEY: ${S3_ROOT_ACCESS_KEY:-local-s3-root}
       S3_ROOT_SECRET_KEY: ${S3_ROOT_SECRET_KEY:-local-s3-root-change-me}
@@ -80,12 +81,16 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-local-autotrader-secret-change-me}
       S3_BUCKET: ${S3_BUCKET:-autotrader-uploads}
     ports:
-      - '${S3_PORT:-9000}:8333'
+      - "${S3_PORT:-9000}:8333"
     volumes:
       - object_storage_data:/data
       - ./ops/object-storage/start.sh:/opt/autotrader/start.sh:ro
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:9333/cluster/status']
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status",
+        ]
       interval: 5s
       timeout: 3s
       retries: 24
@@ -96,12 +101,12 @@ services:
     depends_on:
       object-storage:
         condition: service_healthy
-    entrypoint: ['/bin/sh', '/opt/autotrader/init.sh']
+    entrypoint: ["/bin/sh", "/opt/autotrader/init.sh"]
     environment:
       S3_BUCKET: ${S3_BUCKET:-autotrader-uploads}
     volumes:
       - ./ops/object-storage/init.sh:/opt/autotrader/init.sh:ro
-    restart: 'no'
+    restart: "no"
 
 volumes:
   postgres_data:

@@ -50,15 +50,18 @@ function rejectOn(target: Window, reason: unknown) {
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("startLazySentry", () => {
-  it.each([undefined, ""])("never downloads the SDK without a DSN (%j)", async (dsn) => {
-    const { load, lazy, runIdle, target } = setup({ dsn });
-    runIdle();
-    throwOn(target, new Error("no DSN"));
-    await lazy.ready;
-    await settle();
-    expect(load).not.toHaveBeenCalled();
-    expect(() => lazy.onRouterTransitionStart("/a", "push")).not.toThrow();
-  });
+  it.each([undefined, ""])(
+    "never downloads the SDK without a DSN (%j)",
+    async (dsn) => {
+      const { load, lazy, runIdle, target } = setup({ dsn });
+      runIdle();
+      throwOn(target, new Error("no DSN"));
+      await lazy.ready;
+      await settle();
+      expect(load).not.toHaveBeenCalled();
+      expect(() => lazy.onRouterTransitionStart("/a", "push")).not.toThrow();
+    },
+  );
 
   it("loads on idle, not at start-up", async () => {
     const { sdk, load, lazy, runIdle } = setup();
@@ -78,7 +81,10 @@ describe("startLazySentry", () => {
 
     // The first error triggers the load without waiting for idle.
     expect(load).toHaveBeenCalledOnce();
-    expect(sdk.captureException.mock.calls).toEqual([[early], ["rejected early"]]);
+    expect(sdk.captureException.mock.calls).toEqual([
+      [early],
+      ["rejected early"],
+    ]);
     expect(sdk.init.mock.invocationCallOrder[0]).toBeLessThan(
       sdk.captureException.mock.invocationCallOrder[0]!,
     );
@@ -95,7 +101,8 @@ describe("startLazySentry", () => {
 
   it("caps the queue", async () => {
     const { sdk, target } = setup();
-    for (let i = 0; i < MAX_QUEUED_ERRORS + 5; i += 1) throwOn(target, new Error(`e${i}`));
+    for (let i = 0; i < MAX_QUEUED_ERRORS + 5; i += 1)
+      throwOn(target, new Error(`e${i}`));
     await settle();
     expect(sdk.captureException).toHaveBeenCalledTimes(MAX_QUEUED_ERRORS);
   });
@@ -114,7 +121,9 @@ describe("startLazySentry", () => {
     runIdle();
     await lazy.ready;
     lazy.onRouterTransitionStart("/after", "replace");
-    expect(sdk.captureRouterTransitionStart.mock.calls).toEqual([["/after", "replace"]]);
+    expect(sdk.captureRouterTransitionStart.mock.calls).toEqual([
+      ["/after", "replace"],
+    ]);
   });
 
   it("survives the SDK failing to download", async () => {
@@ -148,7 +157,9 @@ describe("whenBrowserIdle", () => {
     vi.stubGlobal("requestIdleCallback", requestIdleCallback);
     const callback = () => {};
     whenBrowserIdle(callback);
-    expect(requestIdleCallback).toHaveBeenCalledWith(callback, { timeout: 5_000 });
+    expect(requestIdleCallback).toHaveBeenCalledWith(callback, {
+      timeout: 5_000,
+    });
   });
 
   it("falls back to a timeout without it", () => {

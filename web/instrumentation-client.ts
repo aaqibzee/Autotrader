@@ -1,5 +1,8 @@
 import { sentryOptions } from "@/lib/observability/sentry-options";
-import { startLazySentry, whenBrowserIdle } from "@/lib/observability/lazy-sentry";
+import {
+  startLazySentry,
+  whenBrowserIdle,
+} from "@/lib/observability/lazy-sentry";
 
 // The Sentry SDK (~59 kB gzipped, more than half the framework floor) is loaded after
 // the page is idle, not in the first-load bundle (Feature 03 A1). Errors thrown before it

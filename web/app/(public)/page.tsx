@@ -19,7 +19,11 @@ export default async function HomePage() {
   return (
     <main className="shell flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b border-line py-6">
-        <Link aria-label={`${BRAND.name} home`} className="text-lg font-black tracking-tight" href="/">
+        <Link
+          aria-label={`${BRAND.name} home`}
+          className="text-lg font-black tracking-tight"
+          href="/"
+        >
           {BRAND.wordmark}
           <span className="text-brand">.</span>
         </Link>
@@ -37,8 +41,8 @@ export default async function HomePage() {
             The road starts here.
           </h1>
           <p className="mt-6 max-w-lg text-base leading-7 text-ink-muted">
-            The web platform is in place. Marketplace experiences will arrive in the next build
-            stages.
+            The web platform is in place. Marketplace experiences will arrive in
+            the next build stages.
           </p>
         </div>
 
@@ -61,8 +65,13 @@ export default async function HomePage() {
           </p>
           {!ready && (
             <p className="mt-3 text-sm leading-6 text-ink-muted">
-              The readiness endpoint did not respond. Start the API and refresh this page.
-              {requestId && <span className="mt-2 block font-mono text-xs">Request ID: {requestId}</span>}
+              The readiness endpoint did not respond. Start the API and refresh
+              this page.
+              {requestId && (
+                <span className="mt-2 block font-mono text-xs">
+                  Request ID: {requestId}
+                </span>
+              )}
             </p>
           )}
         </aside>

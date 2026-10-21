@@ -39,7 +39,9 @@ export default async function ApiClientsProbePage() {
             {Object.entries(echo).map(([header, received]) => (
               <div key={header} className="contents">
                 <dt>{header}</dt>
-                <dd data-testid={`${client}-${header}`}>{received ? "received" : "absent"}</dd>
+                <dd data-testid={`${client}-${header}`}>
+                  {received ? "received" : "absent"}
+                </dd>
               </div>
             ))}
           </dl>
