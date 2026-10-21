@@ -1,0 +1,12 @@
+# Generated files: CI regenerates them and fails on any diff, so a formatter must
+# never touch them (web/lib/api/* comes from `make api-types`).
+web/lib/api/openapi.json
+web/lib/api/schema.d.ts
+web/package-lock.json
+
+# Build and test output.
+web/.next/
+web/coverage/
+web/test-results/
+web/playwright-report/
+web/next-env.d.ts

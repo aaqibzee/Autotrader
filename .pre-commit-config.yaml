@@ -1,10 +1,4 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -12,10 +6,16 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.5.3
+  # Prettier as a local node hook with an exact version: the old
+  # pre-commit/mirrors-prettier repo is archived and its pinned tag (v3.5.3)
+  # never existed, so this job could not even install its hooks.
+  - repo: local
     hooks:
       - id: prettier
+        name: prettier
+        language: node
+        entry: prettier --write --ignore-unknown
+        additional_dependencies: ['prettier@3.6.2']
         files: '^(web/.*|ops/.*\.(json|md|ya?ml)|\.github/.*\.(json|md|ya?ml)|docker-compose\.yml|README\.md)$'
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.24.2
@@ -23,6 +23,22 @@ repos:
       - id: gitleaks
   - repo: local
     hooks:
+      # ruff through the backend's own environment, so pre-commit and the
+      # backend gate always run the same version (the pinned ruff-pre-commit
+      # v0.6.9 disagreed with the project's ruff 0.17 on formatting). Same
+      # paths as the backend gate: migrations are history and are not rewritten.
+      - id: ruff
+        name: ruff
+        entry: uv run --directory backend ruff check --fix app tests
+        language: system
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --directory backend ruff format app tests
+        language: system
+        pass_filenames: false
+        files: '^backend/.*\.py$'
       - id: import-linter
         name: import-linter
         entry: uv run --directory backend lint-imports --no-cache
