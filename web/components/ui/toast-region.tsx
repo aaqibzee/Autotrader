@@ -47,7 +47,14 @@ export function ToastRegion() {
             className="-m-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md hover-state:bg-surface"
             slot="close"
           >
-            <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="size-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </AriaButton>

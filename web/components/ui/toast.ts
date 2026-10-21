@@ -1,4 +1,3 @@
-
 import { UNSTABLE_ToastQueue as AriaToastQueue } from "react-aria-components";
 
 /**
@@ -30,7 +29,10 @@ export const toastQueue = new AriaToastQueue<ToastContent>({
  * request show one message, not a stack (design §3, "never a toast storm").
  * Returns the toast key, or `undefined` when it was a duplicate.
  */
-export function showToast(message: string, tone: ToastTone = "info"): string | undefined {
+export function showToast(
+  message: string,
+  tone: ToastTone = "info",
+): string | undefined {
   const duplicate = toastQueue.visibleToasts.some(
     (toast) => toast.content.message === message && toast.content.tone === tone,
   );

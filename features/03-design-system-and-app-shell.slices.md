@@ -20,7 +20,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Done (2026-10-21) |
 | 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Done (2026-10-21, branch `feature3`) |
 | 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Done (2026-10-21, branch `feature3`) |
-| 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Not started |
+| 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Done (2026-10-21, branch `feature3`) |
 | 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Not started |
 | 3.10 | `useApiForm`, `ConflictDialog`, form-probe endpoint | 2.5 h | 3.5, 3.7, 3.9 | Not started |
 | 3.11 | Layouts and the public shell | 2 h | 3.4, 3.7, 3.9 | Not started |
@@ -141,6 +141,12 @@ rendered on Linux. Each of these is a guard the design assumed was already there
    cache it. The 3.13 tests assert `no-store` on 404 and 500 for *public* routes, so they
    fail the day Feature 13 adds caching that way. Feature 13 has to set the public cache
    header where the status is known.
+- **A17.** **RangeSlider is built from React Aria's hooks, not its `Slider` component**
+   (found in 3.8). The component formats `aria-valuetext` through `Intl.NumberFormat`
+   options, so a value in pence cannot be read as "£5,000" via `lib/format` (§10). It also
+   pages by a tenth of the range instead of a fixed step count. The hooks (`useSlider`,
+   `useSliderThumb`, `useSliderState`) take a formatter object and a state we can adjust,
+   so both hold, still with React Aria's keyboard and screen-reader behaviour.
 
 ---
 
@@ -664,6 +670,62 @@ production server.
 - RangeSlider: thumbs cannot cross; `aria-valuetext` reads "£5,000"; each key moves the
   documented amount; SSR markup with thumbs positioned by style attributes produces no CSP
   violation (the A2 case).
+
+**Notes (done 2026-10-21, branch `feature3`)**
+- **One lookup normal form, two languages, one contract file.** `lib/format/lookup.ts`
+  (`normaliseLookup`, `matchesLookup`) mirrors `normalise_lookup` in
+  `backend/app/modules/taxonomy/naming.py`. `ops/contracts/lookup-normal-form.json` holds
+  20 cases (accents, `&`/`+`, `ß`, full-width letters, the `ﬁ` ligature, empty input).
+  `backend/tests/test_lookup_contract.py` and `lib/format/lookup.test.ts` both read it, so
+  a change to one implementation fails the other's suite. The web test runs in Vitest's
+  `node` environment, because under jsdom `import.meta.url` is not a `file:` URL. It sits
+  under `lib/format/**`, which has the 100% coverage gate.
+- **Combobox** is React Aria's `ComboBox` with
+  `defaultFilter={matchesLookup}` ("mercedes benz" finds "Mercedes-Benz"; React Aria's
+  default filter already ignores accents, but not spaces or hyphens).
+  `allowsEmptyCollection` keeps the list open to show "No matches" (a `role="status"`
+  message). `isLoading` adds a spinner and "Loading…". The hint and error use React Aria's
+  `description`/`errorMessage` slots, so they are wired into `aria-describedby`. The
+  popover sits on the `z-modal` layer, because it can open inside a sheet or modal; as a
+  later portal it paints above the dialog that opened it. The gallery's Filters sheet now
+  includes it.
+- **Design amendment A17: RangeSlider uses React Aria hooks, not its `Slider` component.**
+  The component builds `aria-valuetext` from an `Intl.NumberFormat`, so a value in pence
+  would be read as "500,000", not "£5,000", against design §10's rule that every value
+  goes through `lib/format`. It also pages by a tenth of the range, not a fixed number of
+  steps. `useSliderState` takes the formatter as an object: a subclass of
+  `Intl.NumberFormat` whose `format` calls the caller's `formatValue`. The state is spread
+  with `pageSize: step * PAGE_STEPS` (10). `react-aria` 3.52.1 and `react-stately` 3.50.0
+  are now direct dependencies, pinned to the versions `react-aria-components` 1.21.1
+  already resolves (deduplicated, no extra copy).
+- RangeSlider details: the track is 44px tall (the whole track is a touch target) with a
+  4px bar. The thumbs are 24px and carry `data-slider-thumb`. The gallery's 24px target
+  check now measures thumbs instead of the 1px visually hidden range inputs. Thumb and fill
+  positions are style attributes, allowed by A2. `onChangeEnd` fires once per key press or
+  drag, which is where 3.10/Feature 07 will update the URL.
+- Bundle: `/` unchanged at **111.6 kB**. The gallery is 157.6 → 189.4 kB (+31.8 kB for
+  ComboBox, ListBox, Popover and the slider hooks); it is not gated.
+- Tests: 25 lookup tests and 11 widget tests.
+  - Combobox: keyboard-only selection; `aria-expanded`, `aria-controls` and
+    `aria-activedescendant` while focus stays in the input; normal-form filtering;
+    empty and loading messages; hint and error descriptions.
+  - Performance: the 546 seed models from `models.csv`, padded to 550, are filtered by
+    one keystroke within a 1 s bound under jsdom.
+  - Slider: "£5,000" from 500,000 pence; arrows, `PageUp`/`PageDown` = 10 steps,
+    `Home`, and `onChangeEnd`; thumbs cannot cross (`End` stops at the other thumb, and
+    its `max` attribute is the other thumb's value); mileage reads "60,000 miles";
+    `renderToString` positions thumbs with `style="left:…"` and emits no `<style>`.
+  - The price test uses a £100k range, so a tenth of the range (20 steps) differs from
+    10 steps. With a £50k range the two coincide and the test proved nothing.
+  - e2e: the make combobox in a real browser and the price slider by keyboard (the thumb
+    really moves), both with the CSP fixture watching.
+- Guard probes: removing the `pageSize` override fails the key test; removing
+  `defaultFilter` fails the normal-form test.
+- Local e2e: 17 of 18 pass. `foundation.spec.ts` still fails locally only because Docker
+  is down.
+- Housekeeping: Prettier reformatted five 3.7 files edited after 3.7's last full
+  pre-commit run (the toast split). The `feature3` push of 3.7 may show a red pre-commit
+  job; this commit fixes it.
 
 ---
 

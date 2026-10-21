@@ -34,7 +34,10 @@ export function Tabs({
 }) {
   return (
     <AriaTabs className={className} defaultSelectedKey={defaultSelectedKey}>
-      <TabList aria-label={label} className="flex gap-1 overflow-x-auto border-b border-line">
+      <TabList
+        aria-label={label}
+        className="flex gap-1 overflow-x-auto border-b border-line"
+      >
         {items.map((item) => (
           <Tab
             className={cx(
@@ -50,7 +53,11 @@ export function Tabs({
         ))}
       </TabList>
       {items.map((item) => (
-        <TabPanel className="py-4 outline-none data-focus-visible:outline-2 data-focus-visible:outline-focus" id={item.id} key={item.id}>
+        <TabPanel
+          className="py-4 outline-none data-focus-visible:outline-2 data-focus-visible:outline-focus"
+          id={item.id}
+          key={item.id}
+        >
           {item.content}
         </TabPanel>
       ))}
@@ -58,7 +65,11 @@ export function Tabs({
   );
 }
 
-export type AccordionItem = { id: string; title: ReactNode; content: ReactNode };
+export type AccordionItem = {
+  id: string;
+  title: ReactNode;
+  content: ReactNode;
+};
 
 /** Sections that expand in place, e.g. a listing's full spec (Feature 08). */
 export function Accordion({
@@ -75,7 +86,10 @@ export function Accordion({
   return (
     <DisclosureGroup
       allowsMultipleExpanded={allowsMultipleExpanded}
-      className={cx("divide-y divide-line rounded-lg border border-line bg-surface", className)}
+      className={cx(
+        "divide-y divide-line rounded-lg border border-line bg-surface",
+        className,
+      )}
       defaultExpandedKeys={defaultExpandedKeys}
     >
       {items.map((item) => (
@@ -98,7 +112,9 @@ export function Accordion({
               </svg>
             </AriaButton>
           </Heading>
-          <DisclosurePanel className="px-4 pb-4 text-ink-soft">{item.content}</DisclosurePanel>
+          <DisclosurePanel className="px-4 pb-4 text-ink-soft">
+            {item.content}
+          </DisclosurePanel>
         </Disclosure>
       ))}
     </DisclosureGroup>

@@ -35,7 +35,9 @@ export function TriggerButton({
   size?: ButtonSize;
   className?: string;
 }) {
-  return <AriaButton {...rest} className={buttonClasses(variant, size, className)} />;
+  return (
+    <AriaButton {...rest} className={buttonClasses(variant, size, className)} />
+  );
 }
 
 type OverlayProps = {
@@ -61,7 +63,10 @@ function DialogBody({ title, hideTitle, children, footer }: OverlayProps) {
       {({ close }) => (
         <>
           <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-3">
-            <Heading className={cx("text-lg font-semibold", hideTitle && "sr-only")} slot="title">
+            <Heading
+              className={cx("text-lg font-semibold", hideTitle && "sr-only")}
+              slot="title"
+            >
               {title}
             </Heading>
             <AriaButton
@@ -69,7 +74,14 @@ function DialogBody({ title, hideTitle, children, footer }: OverlayProps) {
               className="-mr-2 ml-auto inline-flex size-11 items-center justify-center rounded-md text-ink hover-state:bg-sunken"
               slot="close"
             >
-              <svg aria-hidden="true" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </AriaButton>
@@ -77,7 +89,11 @@ function DialogBody({ title, hideTitle, children, footer }: OverlayProps) {
           <div className="flex-1 overflow-y-auto px-5 py-4">
             {typeof children === "function" ? children(close) : children}
           </div>
-          {footer && <div className="border-t border-line px-5 py-3">{footer(close)}</div>}
+          {footer && (
+            <div className="border-t border-line px-5 py-3">
+              {footer(close)}
+            </div>
+          )}
         </>
       )}
     </Dialog>
@@ -87,7 +103,10 @@ function DialogBody({ title, hideTitle, children, footer }: OverlayProps) {
 /** Centred dialog: confirmations, the stale-update conflict dialog (slice 3.10). */
 export function Modal(props: OverlayProps) {
   return (
-    <ModalOverlay className={cx(scrim, "flex items-center justify-center p-4")} isDismissable={props.isDismissable ?? true}>
+    <ModalOverlay
+      className={cx(scrim, "flex items-center justify-center p-4")}
+      isDismissable={props.isDismissable ?? true}
+    >
       <AriaModal
         className={cx(
           "max-h-[90dvh] w-full max-w-lg rounded-lg bg-surface text-ink shadow-overlay",

@@ -39,7 +39,7 @@ spacing, error handling and loading behaviour. Report §5 says car-shopping traf
 - Skeleton loaders for listing cards and the detail page
 - EmptyState and ErrorState (§4), Pagination, Breadcrumbs
 - `ListingCard`: the most-reused composite (image, title, variant, price, year · mileage · fuel · transmission, location/distance, save heart, optional price-indicator slot). The heart is a client island (§6).
-- **Interactive primitives are built on React Aria Components** (combobox, slider, dialog/sheet, tabs, toast region), styled with Tailwind. Hand-rolled comboboxes and sliders are the most common source of keyboard and screen-reader bugs. Bundle cost is checked by the §7 budget; if it fails, the fallback is importing per-component entry points.
+- **Interactive primitives are built on React Aria Components** (combobox, slider, dialog/sheet, tabs, toast region), styled with Tailwind. Hand-rolled comboboxes and sliders are the most common source of keyboard and screen-reader bugs. Bundle cost is checked by the §7 budget; if it fails, the fallback is importing per-component entry points. The range slider uses React Aria's slider *hooks* rather than its component, so values in pence are announced through `lib/format` (A17).
 
 ### 3. API errors, forms and request states (shared plumbing)
 Every later form (dealer sign-up, listing edit, contact dealer, saved search, value my

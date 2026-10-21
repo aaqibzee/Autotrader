@@ -20,7 +20,9 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   AccordionDemo,
+  ComboboxDemos,
   OverlayDemos,
+  RangeSliderDemos,
   TabsDemo,
   ToastDemos,
 } from "./interactive-demos";
@@ -338,6 +340,14 @@ export default function ComponentGalleryPage() {
       <Section id="accordion" title="Accordion">
         <AccordionDemo />
       </Section>
+
+      <Section id="combobox" title="Combobox">
+        <ComboboxDemos />
+      </Section>
+
+      <Section id="range-slider" title="Range slider">
+        <RangeSliderDemos />
+      </Section>
     </main>
   );
 }
@@ -357,6 +367,8 @@ const SECTIONS = [
   ["toasts", "Toasts"],
   ["tabs", "Tabs"],
   ["accordion", "Accordion"],
+  ["combobox", "Combobox"],
+  ["range-slider", "Range slider"],
 ] as const;
 
 const FUEL = [

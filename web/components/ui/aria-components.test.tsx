@@ -13,7 +13,10 @@ function SheetFixture() {
       <button type="button">Before</button>
       <DialogTrigger>
         <TriggerButton>Filters</TriggerButton>
-        <Sheet footer={(close) => <Button onClick={close}>Apply</Button>} title="Filters">
+        <Sheet
+          footer={(close) => <Button onClick={close}>Apply</Button>}
+          title="Filters"
+        >
           <label htmlFor="make">Make</label>
           <input id="make" />
         </Sheet>
@@ -52,12 +55,20 @@ describe("Sheet and Modal (Feature 03 §8 focus rules)", () => {
     const trigger = screen.getByRole("button", { name: "Filters" });
 
     await user.click(trigger);
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Close" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Close",
+      }),
+    );
     expect(screen.queryByRole("dialog")).toBeNull();
     await waitFor(() => expect(trigger).toHaveFocus());
 
     await user.click(trigger);
-    await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Apply" }));
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Apply",
+      }),
+    );
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
@@ -72,8 +83,12 @@ describe("Sheet and Modal (Feature 03 §8 focus rules)", () => {
       </DialogTrigger>,
     );
     await user.click(screen.getByRole("button", { name: "Delete" }));
-    expect(await screen.findByRole("dialog", { name: "Delete this saved search?" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Delete this saved search?" })).toHaveClass("sr-only");
+    expect(
+      await screen.findByRole("dialog", { name: "Delete this saved search?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Delete this saved search?" }),
+    ).toHaveClass("sr-only");
     await user.click(screen.getByRole("button", { name: "Keep it" }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -85,7 +100,8 @@ describe("toasts (Feature 03 §2, §8)", () => {
   afterEach(() => {
     act(() => {
       while (toastQueue.visibleToasts.length > 0) {
-        for (const toast of [...toastQueue.visibleToasts]) toastQueue.close(toast.key);
+        for (const toast of [...toastQueue.visibleToasts])
+          toastQueue.close(toast.key);
       }
     });
   });
@@ -96,7 +112,9 @@ describe("toasts (Feature 03 §2, §8)", () => {
       showToast("We could not save your search.", "error");
       showToast("Search saved.", "success");
     });
-    expect(await screen.findByRole("alert")).toHaveTextContent("We could not save your search.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "We could not save your search.",
+    );
     expect(screen.getByRole("alert")).toHaveAttribute("aria-live", "assertive");
     expect(screen.getByRole("status")).toHaveTextContent("Search saved.");
     expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
@@ -106,7 +124,8 @@ describe("toasts (Feature 03 §2, §8)", () => {
     render(<ToastRegion />);
     const keys: Array<string | undefined> = [];
     act(() => {
-      for (let i = 0; i < 10; i += 1) keys.push(showToast("We could not save your search.", "error"));
+      for (let i = 0; i < 10; i += 1)
+        keys.push(showToast("We could not save your search.", "error"));
     });
     expect(await screen.findAllByRole("alert")).toHaveLength(1);
     expect(keys.filter(Boolean)).toHaveLength(1);
@@ -117,7 +136,9 @@ describe("toasts (Feature 03 §2, §8)", () => {
     act(() => {
       for (let i = 1; i <= 5; i += 1) useToast().show(`Message ${i}`, "info");
     });
-    expect(await screen.findAllByRole("status")).toHaveLength(MAX_VISIBLE_TOASTS);
+    expect(await screen.findAllByRole("status")).toHaveLength(
+      MAX_VISIBLE_TOASTS,
+    );
   });
 
   it("can be dismissed", async () => {
@@ -126,7 +147,9 @@ describe("toasts (Feature 03 §2, §8)", () => {
     act(() => {
       showToast("Your listing is now live.");
     });
-    await user.click(await screen.findByRole("button", { name: "Dismiss notification" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Dismiss notification" }),
+    );
     expect(screen.queryByText("Your listing is now live.")).toBeNull();
   });
 });
@@ -143,10 +166,15 @@ describe("Tabs and Accordion", () => {
         label="Listing details"
       />,
     );
-    expect(screen.getByRole("tablist", { name: "Listing details" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tablist", { name: "Listing details" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Overview" }));
     await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("tab", { name: "Specification" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Specification" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(screen.getByRole("tabpanel")).toHaveTextContent("Spec panel");
   });
 

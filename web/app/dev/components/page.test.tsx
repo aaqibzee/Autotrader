@@ -32,6 +32,8 @@ describe("/dev/components (Feature 03 A3)", () => {
       "toasts",
       "tabs",
       "accordion",
+      "combobox",
+      "range-slider",
     ];
     for (const id of sections) {
       expect(document.getElementById(id), id).not.toBeNull();

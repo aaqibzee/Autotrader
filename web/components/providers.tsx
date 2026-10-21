@@ -9,9 +9,13 @@ import { I18nProvider, RouterProvider } from "react-aria-components";
 // Toasts only ever follow a user action, so the region loads after hydration instead of
 // riding in every public page's first load. Toasts raised before it mounts wait in the
 // queue and appear when it does.
-const ToastRegion = dynamic(() => import("@/components/ui/toast-region").then((module) => module.ToastRegion), {
-  ssr: false,
-});
+const ToastRegion = dynamic(
+  () =>
+    import("@/components/ui/toast-region").then((module) => module.ToastRegion),
+  {
+    ssr: false,
+  },
+);
 
 /**
  * App-wide client context, mounted once in the root layout (Feature 03 slice 3.7).

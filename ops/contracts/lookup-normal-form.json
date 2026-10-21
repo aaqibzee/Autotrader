@@ -1,0 +1,25 @@
+{
+  "description": "Feature 02 A9 lookup normal form. backend/app/modules/taxonomy/naming.py normalise_lookup and web/lib/format/lookup.ts normaliseLookup must both map every input to its expected output. Both test suites read this file, so the two implementations cannot drift apart silently.",
+  "cases": [
+    ["Citroën", "CITROEN"],
+    ["CITROEN", "CITROEN"],
+    ["citroen", "CITROEN"],
+    ["Škoda", "SKODA"],
+    ["Mercedes-Benz", "MERCEDESBENZ"],
+    ["mercedes benz", "MERCEDESBENZ"],
+    ["Volks wagen", "VOLKSWAGEN"],
+    ["Ka+", "KAPLUS"],
+    ["Rolls & Co", "ROLLSANDCO"],
+    ["DS 3", "DS3"],
+    ["MG ZS EV", "MGZSEV"],
+    ["Straße", "STRASSE"],
+    ["Ｆｏｒｄ", "FORD"],
+    ["ﬁesta", "FIESTA"],
+    ["  e-tron GT ", "ETRONGT"],
+    ["Mazda MX-5", "MAZDAMX5"],
+    ["3008", "3008"],
+    ["", ""],
+    ["---", ""],
+    ["é", "E"]
+  ]
+}
