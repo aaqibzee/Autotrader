@@ -17,6 +17,9 @@ from app.db.uuid7 import uuid7
 from tests.helpers.enum_checks import enum_check_drift
 
 
+# Make slugs and aliases here are `probe-…` / `PROBE…`: the real taxonomy may already be
+# loaded in this worker's database (seed and query-plan tests commit it as reference data),
+# so a real name such as `ford` would collide depending on test order.
 @pytest.fixture
 def connection() -> Generator[Connection, None, None]:
     """A connection whose writes are all rolled back at the end of the test."""
@@ -120,12 +123,14 @@ def _insert_model_alias(connection: Connection, model_id: str, alias: str) -> No
 
 def test_well_formed_taxonomy_rows_are_accepted(connection: Connection) -> None:
     # The baseline every rejection case below differs from by exactly one value.
-    make_id = _insert_make(connection, 'alfa-romeo')
+    make_id = _insert_make(connection, 'probe-alfa-romeo')
     model_id = _insert_model(connection, make_id, 'giulia', ['saloon', 'estate'])
-    _insert_make_alias(connection, make_id, 'ALFA')
+    _insert_make_alias(connection, make_id, 'PROBEALFA')
     _insert_model_alias(connection, model_id, 'GIULIAQV')
-    count = connection.execute(text('SELECT count(*) FROM vehicle_models')).scalar_one()
-    assert count >= 1
+    count = connection.execute(
+        text('SELECT count(*) FROM vehicle_models WHERE make_id = :make_id'), {'make_id': make_id}
+    ).scalar_one()
+    assert count == 1
 
 
 @pytest.mark.parametrize(
@@ -152,10 +157,10 @@ def test_well_formed_taxonomy_rows_are_accepted(connection: Connection) -> None:
 def test_database_refuses_malformed_taxonomy_rows(
     connection: Connection, case: str, constraint: str
 ) -> None:
-    make_id = _insert_make(connection, 'ford')
+    make_id = _insert_make(connection, 'probe-ford')
     model_id = _insert_model(connection, make_id, 'fiesta')
-    _insert_make_alias(connection, make_id, 'FORDMOTOR')
-    other_make_id = _insert_make(connection, 'vauxhall')
+    _insert_make_alias(connection, make_id, 'PROBEFORDMOTOR')
+    other_make_id = _insert_make(connection, 'probe-vauxhall')
 
     violations = {
         'make slug with upper case': lambda: _insert_make(connection, 'Skoda'),
@@ -163,7 +168,7 @@ def test_database_refuses_malformed_taxonomy_rows(
         'make slug with a trailing hyphen': lambda: _insert_make(connection, 'mini-'),
         'make slug with a double hyphen': lambda: _insert_make(connection, 'rolls--royce'),
         'make slug with an accent': lambda: _insert_make(connection, 'citroën'),
-        'duplicate make slug': lambda: _insert_make(connection, 'ford'),
+        'duplicate make slug': lambda: _insert_make(connection, 'probe-ford'),
         'model slug with underscore': lambda: _insert_model(connection, make_id, 'focus_st'),
         'duplicate model slug within a make': lambda: _insert_model(connection, make_id, 'fiesta'),
         'unknown body type': lambda: _insert_model(connection, make_id, 'kuga', ['crossover']),
@@ -176,7 +181,7 @@ def test_database_refuses_malformed_taxonomy_rows(
         'mixed-case model alias': lambda: _insert_model_alias(connection, model_id, 'FiestaST'),
         'model alias with an accent': lambda: _insert_model_alias(connection, model_id, 'FIËSTA'),
         'make alias mapped twice': lambda: _insert_make_alias(
-            connection, other_make_id, 'FORDMOTOR'
+            connection, other_make_id, 'PROBEFORDMOTOR'
         ),
     }
 
