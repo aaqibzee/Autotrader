@@ -26,8 +26,17 @@ body {
   background-color: var(--color-signal);
 }
 
+/*
+ * Interaction states that the component gallery can force with `data-force="hover"` /
+ * `data-force="focus"`, so every state renders deterministically for screenshot tests
+ * (Feature 03 §9). Components use `hover-state:` / `focus-state:`, never bare `hover:`.
+ */
+@custom-variant hover-state (&:hover, &[data-force~="hover"]);
+@custom-variant focus-state (&:focus-visible, &[data-force~="focus"]);
+
 /* Visible focus for keyboard users only (Feature 03 §8): 2px, 3:1 against both backgrounds. */
-:focus-visible {
+:focus-visible,
+[data-force~="focus"] {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }

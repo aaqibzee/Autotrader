@@ -14,11 +14,11 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | # | Slice | Est. | Depends on | Status |
 |---|---|---|---|---|
 | 3.1 | Tokens, font, contrast test, web coverage scope | 1.5 h | — | Done (2026-10-20) |
-| 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Built (2026-10-20); both CSP specs pass locally (2026-10-21); awaiting CI e2e |
+| 3.2 | Production-mode e2e harness and CSP fixes | 1.5 h | — | Done (2026-10-21) |
 | 3.3 | First-load JS budget and lazy Sentry | 1.5 h | 3.2 | Done (2026-10-21) |
 | 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Done (2026-10-21) |
 | 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Done (2026-10-21) |
-| 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Not started |
+| 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Done (2026-10-21, branch `feature3`) |
 | 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Not started |
 | 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Not started |
 | 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Not started |
@@ -519,6 +519,49 @@ production server.
 - Testing Library: label association, `aria-invalid`/`aria-describedby` on error,
   IconButton without a name is a type error (`@ts-expect-error` test).
 - e2e smoke: the gallery renders with zero CSP violations (fixture).
+
+**Notes (done 2026-10-21, on branch `feature3`):**
+- From this slice on, Feature 03 work lives on the `feature3` branch, not `main`.
+- 3.2 is Done: CI was fully green at `eb53655` after four CI fixes that were not slice
+  work: the xdist race on `roles.sql` (advisory lock on the shared `postgres` database), an
+  order-dependent taxonomy test, the pre-commit job that had never run (its prettier pin
+  `v3.5.3` did not exist; first repo-wide format in `3915412`), a gitleaks hit on a
+  literal test key, and a certifi advisory.
+- Components in `web/components/ui/`: `button.tsx` (Button with 4 variants and
+  `sm`/`md`/`touch` = 36/40/44 px, `loading` keeps the label and sets `aria-busy`;
+  IconButton requires `label`; Spinner), `inputs.tsx` (TextInput, Select, Checkbox,
+  Toggle, RadioGroup), `field.tsx` (label/hint/error wiring), `display.tsx` (Card, Badge
+  with 7 token tones, `ListingBadges` Example/Reserved/Sold, Tag, Skeleton) and
+  `navigation.tsx` (Pagination with a pure `pageItems`, Breadcrumbs).
+- **Checkbox, Radio and Toggle are native**, not React Aria. Design §2's React Aria list
+  is combobox, slider, dialog/sheet, tabs and toast. Native controls are fully accessible,
+  need no script and render no style attributes. Toggle is a checkbox with
+  `role="switch"`. The whole label row is the click target (≥ 44 px).
+- **No hooks in any component**, so they render the same in server components and in 3.10's
+  client forms. Fields take an explicit `id` (no `useId`); hint and error ids derive from
+  it. Select is the native `<select>`, the best picker on a phone.
+- **Forced states:** `@custom-variant hover-state` / `focus-state` in `globals.css` match
+  `:hover` / `:focus-visible` *or* `[data-force~="hover|focus"]`. Components use them, never
+  bare `hover:`, so the gallery renders hover and focus deterministically for 3.14's
+  screenshots. Verified in compiled CSS. Tailwind's own `hover:` also waits for
+  `@media (hover: hover)`; ours does not.
+- Gallery `/dev/components`: 10 anchored sections (buttons, icon buttons, text inputs,
+  selects, choices, badges, cards, skeletons, pagination, breadcrumbs), each state
+  including long content. It is server-only, so it adds **0 kB** of JS (107.8 kB, the same
+  as `/`). The section index links are marked `data-inline-link` (SC 2.5.8's inline
+  exception). Breadcrumb links got `min-h-6` because they are not inline text.
+- Vitest can now render components: the `oxc` JSX runtime (Vite 8 uses oxc, not esbuild),
+  the `@/` alias, and Testing Library `cleanup` after each test in `vitest.setup.ts`
+  (automatic cleanup needs test globals, which are off).
+- Tests: 32 component and gallery unit tests. They cover label, `aria-describedby` and
+  `aria-invalid` wiring, a switch role, a named radio group, loading buttons, `type=button`
+  by default, and `pageItems` (a one-page gap is shown as the page). An IconButton without
+  `label` is an `@ts-expect-error` (if `label` became optional, typecheck would fail on the
+  unused directive). The gallery is a 404 without the flag (asserted on the `notFound()`
+  digest) and has unique ids. e2e: every section renders, the native controls work, and
+  every control is ≥ 24×24 at 375 px, all with zero CSP violations.
+- Local e2e: 13 of 14 pass on the standalone build (`--workers=1`). `foundation.spec.ts`
+  still fails locally only because Docker is down.
 
 ---
 
