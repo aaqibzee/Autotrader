@@ -10,7 +10,11 @@ export type PageItem = number | "gap";
  * "gap" for each run that is skipped. A gap never stands for a single page: that page is
  * shown instead, so the control is never wider for no saving.
  */
-export function pageItems(current: number, total: number, siblings = 1): PageItem[] {
+export function pageItems(
+  current: number,
+  total: number,
+  siblings = 1,
+): PageItem[] {
   if (total <= 0) return [];
   const page = Math.min(Math.max(current, 1), total);
   const shown = new Set([1, total]);
@@ -41,7 +45,12 @@ export type PaginationProps = {
   className?: string;
 };
 
-export function Pagination({ current, total, hrefFor, className }: PaginationProps) {
+export function Pagination({
+  current,
+  total,
+  hrefFor,
+  className,
+}: PaginationProps) {
   if (total <= 1) return null;
   const page = Math.min(Math.max(current, 1), total);
   return (
@@ -49,18 +58,32 @@ export function Pagination({ current, total, hrefFor, className }: PaginationPro
       <ul className="flex flex-wrap items-center gap-1">
         <li>
           {page > 1 ? (
-            <Link className={cx(pageLink, "text-brand-strong hover-state:bg-brand-tint")} href={hrefFor(page - 1) as Route} rel="prev">
+            <Link
+              className={cx(
+                pageLink,
+                "text-brand-strong hover-state:bg-brand-tint",
+              )}
+              href={hrefFor(page - 1) as Route}
+              rel="prev"
+            >
               Previous
             </Link>
           ) : (
-            <span aria-disabled="true" className={cx(pageLink, "text-ink-muted")}>
+            <span
+              aria-disabled="true"
+              className={cx(pageLink, "text-ink-muted")}
+            >
               Previous
             </span>
           )}
         </li>
         {pageItems(page, total).map((item, index) =>
           item === "gap" ? (
-            <li aria-hidden="true" className={cx(pageLink, "text-ink-muted")} key={`gap-${index}`}>
+            <li
+              aria-hidden="true"
+              className={cx(pageLink, "text-ink-muted")}
+              key={`gap-${index}`}
+            >
               …
             </li>
           ) : (
@@ -70,7 +93,9 @@ export function Pagination({ current, total, hrefFor, className }: PaginationPro
                 aria-label={`Page ${item}`}
                 className={cx(
                   pageLink,
-                  item === page ? "bg-ink text-surface" : "text-brand-strong hover-state:bg-brand-tint",
+                  item === page
+                    ? "bg-ink text-surface"
+                    : "text-brand-strong hover-state:bg-brand-tint",
                 )}
                 href={hrefFor(item) as Route}
               >
@@ -81,11 +106,21 @@ export function Pagination({ current, total, hrefFor, className }: PaginationPro
         )}
         <li>
           {page < total ? (
-            <Link className={cx(pageLink, "text-brand-strong hover-state:bg-brand-tint")} href={hrefFor(page + 1) as Route} rel="next">
+            <Link
+              className={cx(
+                pageLink,
+                "text-brand-strong hover-state:bg-brand-tint",
+              )}
+              href={hrefFor(page + 1) as Route}
+              rel="next"
+            >
               Next
             </Link>
           ) : (
-            <span aria-disabled="true" className={cx(pageLink, "text-ink-muted")}>
+            <span
+              aria-disabled="true"
+              className={cx(pageLink, "text-ink-muted")}
+            >
               Next
             </span>
           )}
@@ -98,7 +133,13 @@ export function Pagination({ current, total, hrefFor, className }: PaginationPro
 export type Crumb = { label: ReactNode; href?: string };
 
 /** The last crumb is the current page: not a link, marked `aria-current`. */
-export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; className?: string }) {
+export function Breadcrumbs({
+  items,
+  className,
+}: {
+  items: readonly Crumb[];
+  className?: string;
+}) {
   if (items.length === 0) return null;
   return (
     <nav aria-label="Breadcrumb" className={className}>
@@ -108,11 +149,17 @@ export function Breadcrumbs({ items, className }: { items: readonly Crumb[]; cla
           return (
             <li className="flex items-center gap-2" key={index}>
               {last || !crumb.href ? (
-                <span aria-current={last ? "page" : undefined} className={last ? "text-ink" : "text-ink-muted"}>
+                <span
+                  aria-current={last ? "page" : undefined}
+                  className={last ? "text-ink" : "text-ink-muted"}
+                >
                   {crumb.label}
                 </span>
               ) : (
-                <Link className="inline-flex min-h-6 items-center text-brand-strong underline-offset-2 hover-state:underline" href={crumb.href as Route}>
+                <Link
+                  className="inline-flex min-h-6 items-center text-brand-strong underline-offset-2 hover-state:underline"
+                  href={crumb.href as Route}
+                >
                   {crumb.label}
                 </Link>
               )}

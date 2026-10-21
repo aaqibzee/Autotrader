@@ -10,7 +10,8 @@ export type ButtonSize = "sm" | "md" | "touch";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-brand text-surface hover-state:bg-brand-strong",
-  secondary: "border border-border-strong bg-surface text-ink hover-state:bg-sunken",
+  secondary:
+    "border border-border-strong bg-surface text-ink hover-state:bg-sunken",
   ghost: "bg-transparent text-brand-strong hover-state:bg-brand-tint",
   danger: "bg-danger text-surface hover-state:bg-ink",
 };
@@ -21,7 +22,11 @@ const SIZES: Record<ButtonSize, string> = {
   touch: "min-h-11 min-w-11 px-5 text-base",
 };
 
-export const buttonClasses = (variant: ButtonVariant, size: ButtonSize, className?: string) =>
+export const buttonClasses = (
+  variant: ButtonVariant,
+  size: ButtonSize,
+  className?: string,
+) =>
   cx(
     "inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors",
     "disabled:cursor-not-allowed disabled:opacity-50",
@@ -39,12 +44,27 @@ export function Spinner({ className }: { className?: string }) {
   return (
     <svg
       aria-hidden="true"
-      className={cx("size-4 shrink-0 animate-spin motion-reduce:animate-none", className)}
+      className={cx(
+        "size-4 shrink-0 animate-spin motion-reduce:animate-none",
+        className,
+      )}
       fill="none"
       viewBox="0 0 24 24"
     >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-90" d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="4" />
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-90"
+        d="M22 12a10 10 0 0 0-10-10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
     </svg>
   );
 }
@@ -89,7 +109,14 @@ export type IconButtonProps = Omit<ButtonProps, "children" | "aria-label"> & {
 };
 
 /** Square icon-only button: 44×44 by default, 36×36 at `sm`. */
-export function IconButton({ label, icon, size = "touch", variant = "ghost", className, ...rest }: IconButtonProps) {
+export function IconButton({
+  label,
+  icon,
+  size = "touch",
+  variant = "ghost",
+  className,
+  ...rest
+}: IconButtonProps) {
   return (
     <Button
       {...rest}
@@ -99,7 +126,10 @@ export function IconButton({ label, icon, size = "touch", variant = "ghost", cla
       title={label}
       variant={variant}
     >
-      <span aria-hidden="true" className="inline-flex size-5 items-center justify-center">
+      <span
+        aria-hidden="true"
+        className="inline-flex size-5 items-center justify-center"
+      >
         {icon}
       </span>
     </Button>

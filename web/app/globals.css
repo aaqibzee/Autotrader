@@ -52,6 +52,32 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Overlay motion (components/ui/overlay.tsx). Exits run the same keyframes in reverse.
+ * The reduced-motion rule below cuts every animation to 0.01ms (Feature 03 §8).
+ */
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-left {
+  from {
+    transform: translateX(100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

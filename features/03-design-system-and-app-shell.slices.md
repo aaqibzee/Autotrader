@@ -19,7 +19,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.4 | Public vs session API clients, boundary check, private headers, safe `next` | 1.5 h | 3.2 | Done (2026-10-21) |
 | 3.5 | Problem contract: typed codes, `ApiError` extensions, mutations, timeout, `problem-ui` | 2 h | 3.4 | Done (2026-10-21) |
 | 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Done (2026-10-21, branch `feature3`) |
-| 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Not started |
+| 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Done (2026-10-21, branch `feature3`) |
 | 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Not started |
 | 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Not started |
 | 3.10 | `useApiForm`, `ConflictDialog`, form-probe endpoint | 2.5 h | 3.5, 3.7, 3.9 | Not started |
@@ -592,6 +592,55 @@ production server.
   frame after opening (no transition running), and no CSP violation is reported.
 - Bundle: record the size React Aria adds to the gallery route. The public shell must not
   import Modal, Tabs or Accordion (the budget check from 3.3 would show it).
+
+**Notes (done 2026-10-21, branch `feature3`)**
+- Pinned `react-aria-components` 1.21.1 and `@testing-library/user-event` 14.6.7.
+- **The budget check under-counted, and now it doesn't.** A page's entry in
+  `app-build-manifest.json` lists only the page's own chunks; the layouts above it are
+  separate entries. `next build`'s "First Load JS" column leaves them out too. With the
+  providers in the root layout, `/` read 107.8 kB while a first visit really loaded
+  130.1 kB (React Aria chunk, 21.1 kB). `check_bundle_budget.mjs` now adds every ancestor
+  `layout` entry, so its numbers are higher than Next's table, which is expected.
+- **The toast region loads lazily.** `next/dynamic` with `ssr: false` in `providers.tsx`
+  takes it out of the first load: `/` is **111.6 kB** (+3.8 kB for the providers and the
+  queue) against the 133 kB budget. Toasts only ever follow a user action, and a toast
+  raised before the region mounts waits in the queue. To make that split possible,
+  `toast.ts` (queue, `showToast`, `useToast`) and `toast-region.tsx` (rendering) are
+  separate files. Only those two touch the `UNSTABLE_` API.
+- Gallery route: 157.6 kB (107.8 kB → +49.8 kB for Modal, Sheet, Tabs, Accordion and the
+  primitives' demos). Not gated; the public shell imports none of them.
+- **CSP: React Aria inserts one `<style>` at runtime**, `usePress`'s `touch-action` rule
+  (`#react-aria-pressable-style`). Without a nonce the policy blocked it; the 3.2 auto
+  fixture caught it on every gallery spec. React Aria reads the nonce from
+  `<meta name="csp-nonce">`, so the root layout renders that tag with the per-request
+  nonce in its `nonce` attribute (the browser blanks the attribute once parsed, so later
+  script cannot read it), never in `content`. Reading `headers()` makes the root layout
+  dynamic, so `/_not-found` is now dynamic too and also gets a nonce. That closes the
+  static-404 gap noted for 3.13.
+- **Toast roles:** React Aria marks every toast `role="alert"`. `ToastContent` overrides it:
+  errors are `alert`/assertive, info and success are `status`/polite (§8). Errors have no
+  timeout (WCAG 2.2.1); info and success dismiss after 6 s. Duplicates of a visible toast
+  are dropped; at most 3 are visible.
+- `TriggerButton` (a React Aria `Button` with our `buttonClasses`) exists because
+  `DialogTrigger` needs a React Aria pressable; our hook-free `Button` cannot be one.
+- Modal and Sheet: `ModalOverlay` locks scroll and traps focus. The sheet is a bottom sheet
+  (`max-h-[85dvh]`) below `lg` and a side panel (`lg:w-96`) from `lg`. Enter and exit
+  animations are CSS keyframes keyed on `data-entering`/`data-exiting`, turned off by
+  `motion-reduce`.
+- Tests: 9 React Aria unit tests (focus in, `Tab` trapped, focus restored on Escape, close
+  button and footer actions; toast roles, dedupe, max 3, dismiss; arrow-key tabs,
+  accordion `aria-expanded`). React Aria restores focus on the next frame, so those
+  assertions use `waitFor`. The toast queue is global, so `afterEach` drains it
+  completely, or waiting toasts leak into the next test. e2e: the sheet at 375 px under
+  reduced motion sits at `bottom: 0` with `transform: none` on the first check, and
+  Escape returns focus. Ten identical errors show one alert. Toast assertions are scoped
+  to the "Notifications" region, because Next's route announcer is also a
+  `role="alert"`. The new CSP spec checks that the pressable style carries the meta's
+  nonce and that the meta exposes no nonce in the DOM.
+- Guard probes: `BUNDLE_BUDGET_KB=110` fails the budget check on `/` (111.6 kB). Before
+  the meta tag, the gallery specs failed on the `style-src-elem` violation.
+- Local e2e: 15 of 16 pass on the standalone build. `foundation.spec.ts` still fails only
+  because Docker is down locally.
 
 ---
 

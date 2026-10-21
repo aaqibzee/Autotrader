@@ -5,12 +5,22 @@ export function Card({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       {...rest}
-      className={cx("rounded-lg border border-line bg-surface shadow-card", className)}
+      className={cx(
+        "rounded-lg border border-line bg-surface shadow-card",
+        className,
+      )}
     />
   );
 }
 
-export type BadgeTone = "neutral" | "brand" | "success" | "warning" | "danger" | "info" | "inverse";
+export type BadgeTone =
+  | "neutral"
+  | "brand"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
+  | "inverse";
 
 // Each pair is a checked text/background pairing in styles/pairings.ts.
 const BADGE_TONES: Record<BadgeTone, string> = {
@@ -54,7 +64,13 @@ export const ListingBadges = {
 };
 
 /** A neutral label, e.g. a spec on a card ("Automatic", "ULEZ"). Static; filters own removable chips. */
-export function Tag({ className, children }: { className?: string; children: ReactNode }) {
+export function Tag({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <span
       className={cx(
@@ -76,7 +92,10 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={cx("block animate-pulse rounded-md bg-sunken motion-reduce:animate-none", className)}
+      className={cx(
+        "block animate-pulse rounded-md bg-sunken motion-reduce:animate-none",
+        className,
+      )}
     />
   );
 }

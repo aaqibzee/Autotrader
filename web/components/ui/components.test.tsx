@@ -9,11 +9,20 @@ import { Breadcrumbs, Pagination, pageItems } from "./navigation";
 
 describe("labelled fields (Feature 03 §8)", () => {
   it("labels the input and links hint and error with aria-describedby", () => {
-    render(<TextInput error="Enter a full postcode." hint="Used for distances." id="pc" label="Postcode" />);
+    render(
+      <TextInput
+        error="Enter a full postcode."
+        hint="Used for distances."
+        id="pc"
+        label="Postcode"
+      />,
+    );
     const input = screen.getByLabelText("Postcode");
     expect(input).toHaveAttribute("aria-invalid", "true");
     expect(input).toHaveAttribute("aria-describedby", "pc-hint pc-error");
-    expect(input).toHaveAccessibleDescription("Used for distances. Enter a full postcode.");
+    expect(input).toHaveAccessibleDescription(
+      "Used for distances. Enter a full postcode.",
+    );
   });
 
   it("has no aria-invalid or aria-describedby without hint or error", () => {
@@ -45,7 +54,13 @@ describe("labelled fields (Feature 03 §8)", () => {
   });
 
   it("select without a placeholder lists only its options", () => {
-    render(<Select id="f2" label="Fuel" options={[{ value: "diesel", label: "Diesel" }]} />);
+    render(
+      <Select
+        id="f2"
+        label="Fuel"
+        options={[{ value: "diesel", label: "Diesel" }]}
+      />,
+    );
     expect(screen.getAllByRole("option")).toHaveLength(1);
   });
 
@@ -56,10 +71,12 @@ describe("labelled fields (Feature 03 §8)", () => {
         <Toggle hint="Daily digest." id="alerts" label="Email me new matches" />
       </>,
     );
-    expect(screen.getByRole("checkbox", { name: "I accept the terms" })).toHaveAccessibleDescription("Required.");
-    expect(screen.getByRole("switch", { name: "Email me new matches" })).toHaveAccessibleDescription(
-      "Daily digest.",
-    );
+    expect(
+      screen.getByRole("checkbox", { name: "I accept the terms" }),
+    ).toHaveAccessibleDescription("Required.");
+    expect(
+      screen.getByRole("switch", { name: "Email me new matches" }),
+    ).toHaveAccessibleDescription("Daily digest.");
   });
 
   it("radio group is a named group with one radio per option", () => {
@@ -77,7 +94,10 @@ describe("labelled fields (Feature 03 §8)", () => {
       />,
     );
     const group = screen.getByRole("group", { name: "Gearbox" });
-    expect(group).toHaveAttribute("aria-describedby", "gearbox-hint gearbox-error");
+    expect(group).toHaveAttribute(
+      "aria-describedby",
+      "gearbox-hint gearbox-error",
+    );
     expect(group).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByRole("radio", { name: "Manual" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Automatic" })).not.toBeChecked();
@@ -112,13 +132,20 @@ describe("buttons", () => {
 
   it("defaults to type=button so it never submits a form by accident", () => {
     render(<Button>Go</Button>);
-    expect(screen.getByRole("button", { name: "Go" })).toHaveAttribute("type", "button");
-    expect(screen.getByRole("button", { name: "Go" })).not.toHaveAttribute("aria-busy");
+    expect(screen.getByRole("button", { name: "Go" })).toHaveAttribute(
+      "type",
+      "button",
+    );
+    expect(screen.getByRole("button", { name: "Go" })).not.toHaveAttribute(
+      "aria-busy",
+    );
   });
 
   it("icon button is named by its label", () => {
     render(<IconButton icon={<svg />} label="Save this car" />);
-    expect(screen.getByRole("button", { name: "Save this car" })).toHaveClass("size-11");
+    expect(screen.getByRole("button", { name: "Save this car" })).toHaveClass(
+      "size-11",
+    );
   });
 
   it("small icon button is 36px", () => {
@@ -191,23 +218,44 @@ describe("Pagination", () => {
 
   it("marks the current page and links the rest", () => {
     render(<Pagination current={10} hrefFor={hrefFor} total={20} />);
-    expect(screen.getByRole("navigation", { name: "Pagination" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Page 10" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Page 9" })).toHaveAttribute("href", "/search?page=9");
-    expect(screen.getByRole("link", { name: "Previous" })).toHaveAttribute("href", "/search?page=9");
-    expect(screen.getByRole("link", { name: "Next" })).toHaveAttribute("href", "/search?page=11");
+    expect(
+      screen.getByRole("navigation", { name: "Pagination" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Page 10" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Page 9" })).toHaveAttribute(
+      "href",
+      "/search?page=9",
+    );
+    expect(screen.getByRole("link", { name: "Previous" })).toHaveAttribute(
+      "href",
+      "/search?page=9",
+    );
+    expect(screen.getByRole("link", { name: "Next" })).toHaveAttribute(
+      "href",
+      "/search?page=11",
+    );
   });
 
   it("disables previous on the first page and next on the last", () => {
-    const { rerender } = render(<Pagination current={1} hrefFor={hrefFor} total={3} />);
+    const { rerender } = render(
+      <Pagination current={1} hrefFor={hrefFor} total={3} />,
+    );
     expect(screen.queryByRole("link", { name: "Previous" })).toBeNull();
-    expect(screen.getByText("Previous")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Previous")).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     rerender(<Pagination current={3} hrefFor={hrefFor} total={3} />);
     expect(screen.queryByRole("link", { name: "Next" })).toBeNull();
   });
 
   it("renders nothing for a single page", () => {
-    const { container } = render(<Pagination current={1} hrefFor={hrefFor} total={1} />);
+    const { container } = render(
+      <Pagination current={1} hrefFor={hrefFor} total={1} />,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 });
@@ -223,7 +271,10 @@ describe("Breadcrumbs", () => {
         ]}
       />,
     );
-    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
     expect(screen.queryByRole("link", { name: "Ford" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Fiesta" })).toBeNull();
     expect(screen.getByText("Fiesta")).toHaveAttribute("aria-current", "page");

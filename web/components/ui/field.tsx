@@ -14,10 +14,15 @@ export type FieldProps = {
   error?: ReactNode;
 };
 
-export function describedBy({ id, hint, error }: Pick<FieldProps, "id" | "hint" | "error">) {
-  const ids = [hint ? `${id}-hint` : undefined, error ? `${id}-error` : undefined].filter(
-    Boolean,
-  );
+export function describedBy({
+  id,
+  hint,
+  error,
+}: Pick<FieldProps, "id" | "hint" | "error">) {
+  const ids = [
+    hint ? `${id}-hint` : undefined,
+    error ? `${id}-error` : undefined,
+  ].filter(Boolean);
   return ids.length > 0 ? ids.join(" ") : undefined;
 }
 
@@ -30,7 +35,13 @@ export function controlA11y(field: Pick<FieldProps, "id" | "hint" | "error">) {
   } as const;
 }
 
-export function FieldHint({ id, children }: { id: string; children?: ReactNode }) {
+export function FieldHint({
+  id,
+  children,
+}: {
+  id: string;
+  children?: ReactNode;
+}) {
   if (!children) return null;
   return (
     <p className="mt-1 text-sm text-ink-muted" id={`${id}-hint`}>
@@ -39,7 +50,13 @@ export function FieldHint({ id, children }: { id: string; children?: ReactNode }
   );
 }
 
-export function FieldError({ id, children }: { id: string; children?: ReactNode }) {
+export function FieldError({
+  id,
+  children,
+}: {
+  id: string;
+  children?: ReactNode;
+}) {
   if (!children) return null;
   return (
     <p className="mt-1 text-sm font-medium text-danger" id={`${id}-error`}>
@@ -58,7 +75,10 @@ export function FieldLabel({
   className?: string;
 }) {
   return (
-    <label className={cx("block text-sm font-semibold text-ink", className)} htmlFor={htmlFor}>
+    <label
+      className={cx("block text-sm font-semibold text-ink", className)}
+      htmlFor={htmlFor}
+    >
       {children}
     </label>
   );

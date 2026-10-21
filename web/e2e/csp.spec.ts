@@ -13,6 +13,41 @@ test.describe("Content Security Policy (Feature 03 slice 3.2)", () => {
     expect(policy).toContain("style-src-attr 'unsafe-inline'");
   });
 
+  test("React Aria's runtime style gets the page nonce, which the DOM never shows", async ({
+    page,
+  }) => {
+    await page.goto("/dev/components#overlays");
+    // A React Aria pressable mounts usePress, which inserts its touch-action <style>.
+    await expect(
+      page.getByRole("button", { name: "Open modal" }),
+    ).toBeVisible();
+
+    // The style goes in from an effect after hydration, so wait for it.
+    await expect(page.locator("style#react-aria-pressable-style")).toHaveCount(
+      1,
+    );
+    const nonces = await page.evaluate(() => {
+      const meta = document.querySelector<HTMLMetaElement>(
+        'meta[name="csp-nonce"]',
+      );
+      const style = document.querySelector<HTMLStyleElement>(
+        "style#react-aria-pressable-style",
+      );
+      return {
+        meta: meta?.nonce ?? "",
+        metaAttribute: meta?.getAttribute("nonce"),
+        metaContent: meta?.getAttribute("content"),
+        style: style?.nonce ?? "",
+      };
+    });
+    expect(nonces.meta).not.toBe("");
+    expect(nonces.style).toBe(nonces.meta);
+    // Browsers blank a parsed nonce attribute, so script injected later cannot read it.
+    expect(nonces.metaAttribute).toBe("");
+    expect(nonces.metaContent).toBeNull();
+    // The auto fixture fails this test if the style was blocked.
+  });
+
   test.describe("the guard", () => {
     test.use({ allowCspViolations: true });
 

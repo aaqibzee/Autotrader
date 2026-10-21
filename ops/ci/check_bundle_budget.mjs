@@ -58,9 +58,23 @@ function routeOf(entry) {
 	return route === "" ? "/" : route;
 }
 
+/**
+ * A page's manifest entry lists only its own chunks. The layouts above it ("/layout",
+ * "/(public)/layout", ...) are separate entries, and a first visit loads them too: the
+ * root layout carries the React Aria providers and toast region (slice 3.7). `next build`
+ * leaves them out of its "First Load JS" column, so this total is higher than Next's.
+ */
+function layoutEntriesOf(entry) {
+	const segments = entry.replace(/\/page$/, "").split("/").filter(Boolean);
+	return ["", ...segments.map((_, i) => `/${segments.slice(0, i + 1).join("/")}`)].map(
+		(prefix) => `${prefix}/layout`,
+	);
+}
+
 const routes = Object.entries(manifest.pages)
 	.filter(([entry]) => entry.endsWith("/page"))
-	.map(([entry, files]) => {
+	.map(([entry, pageFiles]) => {
+		const files = [...layoutEntriesOf(entry).flatMap((layout) => manifest.pages[layout] ?? []), ...pageFiles];
 		const chunks = [...new Set(files)].filter((file) => file.endsWith(".js") && !polyfills.has(file));
 		const totalKb = chunks.reduce((sum, file) => sum + gzipKb(file), 0);
 		return { route: routeOf(entry), chunks, totalKb, public: !NOT_PUBLIC.test(routeOf(entry)) };

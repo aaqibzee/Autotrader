@@ -1,4 +1,8 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+} from "react";
 import { cx } from "./cx";
 import {
   FieldError,
@@ -26,11 +30,23 @@ export type TextInputProps = FieldProps &
   Force & { inputClassName?: string };
 
 /** Labelled text input. 44px tall: the primary input on a phone. */
-export function TextInput({ id, label, hint, error, className, inputClassName, ...rest }: TextInputProps) {
+export function TextInput({
+  id,
+  label,
+  hint,
+  error,
+  className,
+  inputClassName,
+  ...rest
+}: TextInputProps) {
   return (
     <div className={className}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <input {...rest} {...controlA11y({ id, hint, error })} className={textControl(Boolean(error), inputClassName)} />
+      <input
+        {...rest}
+        {...controlA11y({ id, hint, error })}
+        className={textControl(Boolean(error), inputClassName)}
+      />
       <FieldHint id={id}>{hint}</FieldHint>
       <FieldError id={id}>{error}</FieldError>
     </div>
@@ -47,14 +63,31 @@ export type SelectProps = FieldProps &
  * Native `<select>`: the platform picker is the best control on a phone and needs no
  * script. The searchable make/model picker is the Combobox (slice 3.8).
  */
-export function Select({ id, label, hint, error, options, placeholder, className, ...rest }: SelectProps) {
+export function Select({
+  id,
+  label,
+  hint,
+  error,
+  options,
+  placeholder,
+  className,
+  ...rest
+}: SelectProps) {
   return (
     <div className={className}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <select {...rest} {...controlA11y({ id, hint, error })} className={textControl(Boolean(error), "pr-8")}>
+      <select
+        {...rest}
+        {...controlA11y({ id, hint, error })}
+        className={textControl(Boolean(error), "pr-8")}
+      >
         {placeholder !== undefined && <option value="">{placeholder}</option>}
         {options.map((option) => (
-          <option disabled={option.disabled} key={option.value} value={option.value}>
+          <option
+            disabled={option.disabled}
+            key={option.value}
+            value={option.value}
+          >
             {option.label}
           </option>
         ))}
@@ -70,16 +103,32 @@ export function Select({ id, label, hint, error, options, placeholder, className
 const box =
   "size-5 shrink-0 cursor-pointer accent-brand disabled:cursor-not-allowed focus-state:outline-2";
 // The whole row is the click target, comfortably over 24×24.
-const choiceRow = "flex min-h-11 cursor-pointer items-center gap-3 text-base text-ink";
+const choiceRow =
+  "flex min-h-11 cursor-pointer items-center gap-3 text-base text-ink";
 
-export type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id" | "type"> &
+export type CheckboxProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "id" | "type"
+> &
   Force & { id: string; label: ReactNode; hint?: ReactNode; error?: ReactNode };
 
-export function Checkbox({ id, label, hint, error, className, ...rest }: CheckboxProps) {
+export function Checkbox({
+  id,
+  label,
+  hint,
+  error,
+  className,
+  ...rest
+}: CheckboxProps) {
   return (
     <div className={className}>
       <label className={choiceRow} htmlFor={id}>
-        <input {...rest} {...controlA11y({ id, hint, error })} className={box} type="checkbox" />
+        <input
+          {...rest}
+          {...controlA11y({ id, hint, error })}
+          className={box}
+          type="checkbox"
+        />
         <span>{label}</span>
       </label>
       <FieldHint id={id}>{hint}</FieldHint>
@@ -91,7 +140,14 @@ export function Checkbox({ id, label, hint, error, className, ...rest }: Checkbo
 export type ToggleProps = CheckboxProps;
 
 /** On/off setting that applies immediately (`role="switch"`); use Checkbox inside forms. */
-export function Toggle({ id, label, hint, error, className, ...rest }: ToggleProps) {
+export function Toggle({
+  id,
+  label,
+  hint,
+  error,
+  className,
+  ...rest
+}: ToggleProps) {
   return (
     <div className={className}>
       <label className={cx(choiceRow, "justify-between")} htmlFor={id}>
@@ -157,9 +213,15 @@ export function RadioGroup({
           return (
             <label className={choiceRow} htmlFor={id} key={option.value}>
               <input
-                checked={value === undefined ? undefined : value === option.value}
+                checked={
+                  value === undefined ? undefined : value === option.value
+                }
                 className={box}
-                defaultChecked={defaultValue === undefined ? undefined : defaultValue === option.value}
+                defaultChecked={
+                  defaultValue === undefined
+                    ? undefined
+                    : defaultValue === option.value
+                }
                 disabled={option.disabled}
                 id={id}
                 name={name}
