@@ -17,6 +17,9 @@ from alembic import command
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _ROLES_SQL = _REPO_ROOT / 'ops' / 'postgres' / 'roles.sql'
+# Advisory lock key for applying roles.sql, taken on the `postgres` database (never an app
+# database, so it cannot collide with app/db/locks.py's keys). Arbitrary, but fixed.
+_ROLES_LOCK_KEY = 7_301_003
 _TEST_ENV = dotenv_values(_REPO_ROOT / '.env.test')
 for _key, _value in _TEST_ENV.items():
     if _value is not None:
@@ -57,15 +60,30 @@ def _prepare_test_database() -> None:
     command.upgrade(alembic_config, 'head')
 
     # Grants are per-database, so every worker DB needs the least-privilege roles applied.
+    # But roles.sql also writes cluster-wide catalog rows (`CREATE ROLE`, `ALTER ROLE ... SET`
+    # in pg_authid / pg_db_role_setting), and xdist workers applying it at the same moment
+    # fail with "tuple concurrently updated". So the step is serialised across workers by
+    # an advisory lock. Advisory locks are scoped to a database, and each worker has its
+    # own, so the lock is held on the shared `postgres` database.
+    lock_engine = create_engine(admin_url, isolation_level='AUTOCOMMIT', poolclass=NullPool)
     roles_engine = create_engine(_TEST_DATABASE_URL, poolclass=NullPool)
     try:
-        with roles_engine.begin() as connection:
-            # Raw driver call with no params: psycopg would otherwise parse format()'s %I.
-            driver_connection = connection.connection.driver_connection
-            assert driver_connection is not None
-            driver_connection.execute(_ROLES_SQL.read_text(encoding='utf-8'))
+        with lock_engine.connect() as lock_connection:
+            lock_connection.execute(text('SELECT pg_advisory_lock(:key)'), {'key': _ROLES_LOCK_KEY})
+            try:
+                with roles_engine.begin() as connection:
+                    # Raw driver call with no params: psycopg would otherwise parse
+                    # format()'s %I.
+                    driver_connection = connection.connection.driver_connection
+                    assert driver_connection is not None
+                    driver_connection.execute(_ROLES_SQL.read_text(encoding='utf-8'))
+            finally:
+                lock_connection.execute(
+                    text('SELECT pg_advisory_unlock(:key)'), {'key': _ROLES_LOCK_KEY}
+                )
     finally:
         roles_engine.dispose()
+        lock_engine.dispose()
 
     test_engine = create_engine(_TEST_DATABASE_URL, poolclass=NullPool)
     try:

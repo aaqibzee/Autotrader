@@ -19,7 +19,8 @@ BEGIN
 			BEGIN
 				EXECUTE format('CREATE ROLE %I NOLOGIN', role_name);
 			EXCEPTION
-				-- Parallel test workers can race to create the same cluster-wide role.
+				-- Parallel test workers can race to create the same cluster-wide role (conftest.py
+				-- also serialises this file across workers with an advisory lock).
 				WHEN duplicate_object OR unique_violation THEN NULL;
 			END;
 		END IF;
