@@ -1,3 +1,4 @@
+import { reportNetworkFailure, reportNetworkSuccess } from "./connectivity";
 import { ApiNetworkError, ApiTimeoutError, toApiError } from "./error";
 import { createApiHeaders } from "./headers";
 
@@ -56,11 +57,15 @@ export async function requestApi<TResponse = unknown>(
   } catch (error) {
     if (timedOut) throw new ApiTimeoutError(timeoutMs!);
     if (callerSignal?.aborted) throw error;
+    // No response at all: tell the offline banner (browser only; see connectivity.ts).
+    reportNetworkFailure();
     throw new ApiNetworkError(error);
   } finally {
     clearTimeout(timer);
     callerSignal?.removeEventListener("abort", forwardAbort);
   }
+  // Any response, even an error status, proves the network and the API are reachable.
+  reportNetworkSuccess();
 
   if (!response.ok) {
     throw toApiError(

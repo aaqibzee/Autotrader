@@ -3,7 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { RangeSlider } from "@/components/ui/range-slider";
+import { ProblemView } from "@/components/ui/problem-view";
+import {
+  reportNetworkFailure,
+  reportNetworkSuccess,
+} from "@/lib/api/connectivity";
+import { ApiError, ApiNetworkError, ApiTimeoutError } from "@/lib/api/error";
 import { formatMileage, formatPrice } from "@/lib/format";
+import { useState } from "react";
 import { Checkbox, Select } from "@/components/ui/inputs";
 import {
   DialogTrigger,
@@ -249,6 +256,77 @@ export function RangeSliderDemos() {
         step={1_000}
         thumbLabels={["Minimum", "Maximum"]}
       />
+    </div>
+  );
+}
+
+/** Every ProblemView outcome, built from the same errors the API client throws. */
+export function ProblemDemos() {
+  // A new error object restarts the countdown, as a fresh 429 would.
+  const [rateLimited, setRateLimited] = useState(
+    () =>
+      new ApiError({ code: "rate_limited" }, 429, undefined, {
+        retryAfterSeconds: 15,
+      }),
+  );
+  const restart = () =>
+    setRateLimited(
+      new ApiError({ code: "rate_limited" }, 429, undefined, {
+        retryAfterSeconds: 15,
+      }),
+    );
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <ProblemView
+        error={
+          new ApiError(
+            { code: "internal_error" },
+            500,
+            "req_01J9Z6Q4X8K2M3N5P7R9S1T3V5",
+          )
+        }
+        headingLevel={3}
+        onRetry={() => {}}
+      />
+      <ProblemView
+        continueAction={
+          <Button variant="primary">Enter details manually</Button>
+        }
+        error={new ApiError({ code: "integration_unavailable" }, 503)}
+        headingLevel={3}
+        onRetry={() => {}}
+      />
+      <ProblemView
+        error={new ApiNetworkError(new TypeError("Failed to fetch"))}
+        headingLevel={3}
+        onRetry={() => {}}
+      />
+      <ProblemView
+        error={new ApiTimeoutError(10_000)}
+        headingLevel={3}
+        onRetry={() => {}}
+      />
+      <div data-demo="rate-limited">
+        <ProblemView error={rateLimited} headingLevel={3} onRetry={restart} />
+      </div>
+      <ProblemView
+        error={new ApiError({ code: "dealer_not_approved" }, 403)}
+        headingLevel={3}
+      />
+    </div>
+  );
+}
+
+/** The banner is global (root providers); these drive its API-failure signal. */
+export function OfflineDemos() {
+  return (
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={reportNetworkFailure} variant="secondary">
+        Simulate a failed request
+      </Button>
+      <Button onClick={reportNetworkSuccess} variant="secondary">
+        Simulate a successful request
+      </Button>
     </div>
   );
 }

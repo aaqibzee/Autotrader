@@ -1,7 +1,13 @@
 "use client";
 
 import { type RefObject, useMemo, useRef } from "react";
-import { VisuallyHidden, mergeProps, useFocusRing, useSlider, useSliderThumb } from "react-aria";
+import {
+  VisuallyHidden,
+  mergeProps,
+  useFocusRing,
+  useSlider,
+  useSliderThumb,
+} from "react-aria";
 import { type SliderState, useSliderState } from "react-stately";
 import { cx } from "./cx";
 
@@ -63,7 +69,10 @@ class FormatValueAdapter extends Intl.NumberFormat {
   }
 }
 
-const asRange = (values: number[]): SliderRange => [values[0] ?? 0, values[1] ?? 0];
+const asRange = (values: number[]): SliderRange => [
+  values[0] ?? 0,
+  values[1] ?? 0,
+];
 
 export function RangeSlider({
   label,
@@ -81,7 +90,10 @@ export function RangeSlider({
   className,
 }: RangeSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const numberFormatter = useMemo(() => new FormatValueAdapter(formatValue), [formatValue]);
+  const numberFormatter = useMemo(
+    () => new FormatValueAdapter(formatValue),
+    [formatValue],
+  );
   const ariaProps = {
     label,
     minValue,
@@ -90,12 +102,20 @@ export function RangeSlider({
     value,
     defaultValue: defaultValue ?? [minValue, maxValue],
     isDisabled,
-    onChange: onChange && ((values: number | number[]) => onChange(asRange([values].flat()))),
-    onChangeEnd: onChangeEnd && ((values: number | number[]) => onChangeEnd(asRange([values].flat()))),
+    onChange:
+      onChange &&
+      ((values: number | number[]) => onChange(asRange([values].flat()))),
+    onChangeEnd:
+      onChangeEnd &&
+      ((values: number | number[]) => onChangeEnd(asRange([values].flat()))),
   };
   const baseState = useSliderState({ ...ariaProps, numberFormatter });
   const state: SliderState = { ...baseState, pageSize: step * PAGE_STEPS };
-  const { groupProps, trackProps, labelProps, outputProps } = useSlider(ariaProps, state, trackRef);
+  const { groupProps, trackProps, labelProps, outputProps } = useSlider(
+    ariaProps,
+    state,
+    trackRef,
+  );
 
   const low = state.getThumbPercent(0) * 100;
   const high = state.getThumbPercent(1) * 100;
@@ -107,13 +127,17 @@ export function RangeSlider({
           {label}
         </label>
         <output {...outputProps} className="text-sm text-ink-soft tabular-nums">
-          {state.getFormattedValue(state.values[0] ?? minValue)} – {state.getFormattedValue(state.values[1] ?? maxValue)}
+          {state.getFormattedValue(state.values[0] ?? minValue)} –{" "}
+          {state.getFormattedValue(state.values[1] ?? maxValue)}
         </output>
       </div>
       {/* 44px tall, so the whole track is a touch target; the visible bar is 4px. */}
       <div
         {...trackProps}
-        className={cx("relative h-11 w-full", isDisabled ? "opacity-50" : "cursor-pointer")}
+        className={cx(
+          "relative h-11 w-full",
+          isDisabled ? "opacity-50" : "cursor-pointer",
+        )}
         ref={trackRef}
       >
         <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-line" />
@@ -122,8 +146,20 @@ export function RangeSlider({
           className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-brand"
           style={{ left: `${low}%`, width: `${high - low}%` }}
         />
-        <Thumb index={0} label={thumbLabels[0]} name={names?.[0]} state={state} trackRef={trackRef} />
-        <Thumb index={1} label={thumbLabels[1]} name={names?.[1]} state={state} trackRef={trackRef} />
+        <Thumb
+          index={0}
+          label={thumbLabels[0]}
+          name={names?.[0]}
+          state={state}
+          trackRef={trackRef}
+        />
+        <Thumb
+          index={1}
+          label={thumbLabels[1]}
+          name={names?.[1]}
+          state={state}
+          trackRef={trackRef}
+        />
       </div>
     </div>
   );

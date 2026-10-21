@@ -146,19 +146,23 @@ const GENERIC_CODES: ReadonlySet<string> = new Set<ProblemCode>([
   "internal_error",
 ]);
 
+export const SIGN_IN_UI: ProblemUi = {
+  kind: "sign-in",
+  title: "Please sign in",
+  message: "Your session has ended. Sign in to carry on where you left off.",
+  retry: false,
+};
+
+export const PERMISSION_UI: ProblemUi = {
+  kind: "permission",
+  title: "You do not have access",
+  message: "Your account does not have permission to do this.",
+  retry: false,
+};
+
 const STATUS_UI: Record<number, ProblemUi> = {
-  401: {
-    kind: "sign-in",
-    title: "Please sign in",
-    message: "Your session has ended. Sign in to carry on where you left off.",
-    retry: false,
-  },
-  403: {
-    kind: "permission",
-    title: "You do not have access",
-    message: "Your account does not have permission to do this.",
-    retry: false,
-  },
+  401: SIGN_IN_UI,
+  403: PERMISSION_UI,
   404: PROBLEM_UI.not_found,
   409: PROBLEM_UI.stale_update,
   422: PROBLEM_UI.invalid_input,

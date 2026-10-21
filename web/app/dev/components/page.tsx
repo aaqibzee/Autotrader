@@ -14,6 +14,13 @@ import {
   Toggle,
 } from "@/components/ui/inputs";
 import { Breadcrumbs, Pagination } from "@/components/ui/navigation";
+import {
+  EmptyState,
+  ErrorState,
+  NotFound,
+  PermissionDenied,
+} from "@/components/ui/states";
+import { PROBLEM_UI } from "@/lib/api/problem-ui";
 import { galleryEnabled } from "@/lib/dev/gallery";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -21,7 +28,9 @@ import type { ReactNode } from "react";
 import {
   AccordionDemo,
   ComboboxDemos,
+  OfflineDemos,
   OverlayDemos,
+  ProblemDemos,
   RangeSliderDemos,
   TabsDemo,
   ToastDemos,
@@ -348,6 +357,39 @@ export default function ComponentGalleryPage() {
       <Section id="range-slider" title="Range slider">
         <RangeSliderDemos />
       </Section>
+
+      <Section id="states" title="Empty and error states">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <EmptyState
+            action={<Button variant="secondary">Clear filters</Button>}
+            headingLevel={3}
+            message="Try a wider radius, or remove a filter or two."
+            title="No cars match your search"
+          />
+          <ErrorState
+            headingLevel={3}
+            requestId="req_server_rendered"
+            ui={PROBLEM_UI.internal_error}
+          />
+          <PermissionDenied headingLevel={3} />
+          <NotFound headingLevel={3} />
+        </div>
+        <h3 className="mt-8 text-lg font-semibold">
+          From a thrown error (ProblemView)
+        </h3>
+        <div className="mt-4">
+          <ProblemDemos />
+        </div>
+      </Section>
+
+      <Section id="offline" title="Offline banner">
+        <p className="mb-4 text-ink-soft">
+          Shown at the top of every page. Go offline in the browser, or simulate
+          a request that got no response while the browser still thinks it is
+          online.
+        </p>
+        <OfflineDemos />
+      </Section>
     </main>
   );
 }
@@ -369,6 +411,8 @@ const SECTIONS = [
   ["accordion", "Accordion"],
   ["combobox", "Combobox"],
   ["range-slider", "Range slider"],
+  ["states", "States"],
+  ["offline", "Offline banner"],
 ] as const;
 
 const FUEL = [

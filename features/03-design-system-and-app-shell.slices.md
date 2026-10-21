@@ -21,7 +21,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.6 | Component gallery and basic primitives | 2.5 h | 3.1, 3.2 | Done (2026-10-21, branch `feature3`) |
 | 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Done (2026-10-21, branch `feature3`) |
 | 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Done (2026-10-21, branch `feature3`) |
-| 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Not started |
+| 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Done (2026-10-21, branch `feature3`) |
 | 3.10 | `useApiForm`, `ConflictDialog`, form-probe endpoint | 2.5 h | 3.5, 3.7, 3.9 | Not started |
 | 3.11 | Layouts and the public shell | 2 h | 3.4, 3.7, 3.9 | Not started |
 | 3.12 | `ListingCard`, image placeholder, save-heart island | 1.5 h | 3.6, 3.11 | Not started |
@@ -750,6 +750,70 @@ production server.
 - Countdown: fake timers, enabled at zero, announced twice in total.
 - Offline: dispatching `offline`/`online` toggles the banner; a network error shows it
   while `navigator.onLine` is still true.
+
+**Notes (done 2026-10-21, branch `feature3`)**
+- `components/ui/states.tsx` (hook-free, renders on the server): `EmptyState`, `ErrorState`,
+  `PermissionDenied` and `NotFound`. `ErrorState`'s variant follows from `ui.kind`:
+  - `generic`: retry, plus the request id shown small.
+  - `unavailable`: the caller's `continueAction` comes first, with a secondary retry.
+  - `offline`.
+
+  Copy always comes from `problem-ui.ts`; callers pass only actions. Each root carries
+  `data-problem-kind`. `problem-ui.ts` now exports `SIGN_IN_UI` and `PERMISSION_UI`.
+- `ProblemView` (client) maps `problemUi(error).kind` to one of them. `sign-in` takes a
+  `signInAction` (Feature 04 supplies it). `field-errors`/`conflict` fall back to a plain
+  error without retry until `useApiForm` (3.10) handles them.
+- **Bug found by the code table test:** `PermissionDenied` and `NotFound` used their
+  default copy, so `dealer_not_approved` showed "You do not have access" instead of
+  "Awaiting approval". `ProblemView` now passes the resolved UI through.
+- `useRetryAfter(seconds, resetKey)` (`lib/hooks/use-retry-after.ts`):
+  - It counts from a deadline, so a throttled background tab still ends on time.
+  - `resetKey` (the error object) restarts the wait for a new 429 with the same seconds.
+  - The live region starts empty. The start message is set on the next task (also
+    satisfying oxlint's `set-state-in-effect` rule), then "You can try again now." at
+    zero: two announcements in total.
+  - `RateLimitNotice` shows `formatCountdown` ("0:15") outside the live region.
+  - New `lib/format` helpers `formatCountdown` and `formatWait` ("45 seconds",
+    "3 minutes"), under the 100% gate.
+- Offline:
+  - `lib/api/connectivity.ts` is a browser-only signal. `requestApi` reports an
+    `ApiNetworkError` as a failure and any response, even a 500, as a success. Timeouts
+    and caller aborts count as neither.
+  - Reports made on the server are ignored, because module state there is shared by
+    every visitor.
+  - `OfflineBanner` combines `navigator.onLine` with that signal through
+    `useSyncExternalStore`. Its live region is always present and the server renders it
+    empty. The `online` event clears a recorded failure.
+  - It is mounted once in `Providers`, eagerly, since it must work when the network does
+    not. 3.11 may move it into the layouts.
+- Bundle: `/` is **113.5 kB** (+1.9 kB for the banner and signal). The gallery is
+  194.7 kB, not gated.
+- Tests: 38 state tests.
+  - A `Record<ProblemUiKind, error>` table, so a new kind fails typecheck until it is
+    tested.
+  - Every `ProblemCode` renders its title.
+  - `integration_unavailable` shows "continue manually" before retry.
+  - The request id is shown; there is no retry where it cannot help; the 401 action.
+  - Countdown under fake timers: disabled, then enabled at zero, with exactly two
+    announcements, and a restart on a new error.
+  - Offline: events, a network error while `onLine` is true, recovery, empty SSR.
+  - Signal tests in `connectivity.test.ts` and `response.test.ts`.
+  - e2e: Playwright `setOffline` toggles the banner, simulated failure and success, the
+    countdown under `page.clock`, and the unavailable variant.
+- Guard probes: announcing every tick fails the countdown test; ignoring the network
+  signal fails the "`onLine` still true" test.
+- **Flaky combobox spec, fixed.** About one run in ten, the list closed right after typing.
+  Next scrolls to a hash target after hydration, and React Aria closes an open popover
+  on scroll. The spec now opens `/dev/components` without a hash and scrolls the control
+  into view (15 of 15 repeats pass). Also added `gotoHydrated()` in `e2e/fixtures.ts`:
+  `Providers` sets `<html data-hydrated>` in an effect, and specs that type or press keys
+  wait for it.
+- **Pre-commit lesson:** `pre-commit run --all-files` only checks *tracked* files, so new
+  files from 3.7 and 3.8 were never formatted. Prettier fixed four 3.8 files here (format
+  only). The `feature3` pushes of 3.7 and 3.8 may show a red pre-commit job. From now on:
+  `git add -A`, then pre-commit, then commit.
+- Local e2e: 20 of 21 pass. `foundation.spec.ts` still fails locally only because Docker
+  is down.
 
 ---
 

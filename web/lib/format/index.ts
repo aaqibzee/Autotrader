@@ -84,3 +84,30 @@ export function formatRelativeTime(
     unit,
   );
 }
+
+function wholeSeconds(seconds: number): number {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    throw new RangeError(
+      `expected a non-negative number of seconds, received ${seconds}`,
+    );
+  }
+  return Math.ceil(seconds);
+}
+
+/** A visible countdown: "0:45", "12:00". Rounds up, so it never shows 0:00 early. */
+export function formatCountdown(seconds: number): string {
+  const total = wholeSeconds(seconds);
+  const minutes = Math.floor(total / 60);
+  return `${minutes}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/**
+ * A wait in words, for screen readers and sentences: "1 second", "45 seconds",
+ * "1 minute", "3 minutes". A minute or more rounds up to whole minutes.
+ */
+export function formatWait(seconds: number): string {
+  const total = wholeSeconds(seconds);
+  if (total < 60) return total === 1 ? "1 second" : `${total} seconds`;
+  const minutes = Math.ceil(total / 60);
+  return minutes === 1 ? "1 minute" : `${minutes} minutes`;
+}

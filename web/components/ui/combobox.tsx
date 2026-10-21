@@ -73,7 +73,8 @@ export function Combobox({
       name={name}
       onSelectionChange={
         onSelectionChange &&
-        ((key: Key | null) => onSelectionChange(key === null ? null : String(key)))
+        ((key: Key | null) =>
+          onSelectionChange(key === null ? null : String(key)))
       }
       selectedKey={selectedKey}
       // Without this, an empty filter result closes the list and the user sees nothing.
@@ -97,7 +98,14 @@ export function Combobox({
           aria-label="Show options"
           className="inline-flex size-11 shrink-0 items-center justify-center rounded-r-md text-ink-muted outline-none hover-state:text-ink data-focus-visible:outline-2 data-focus-visible:outline-focus"
         >
-          <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg
+            aria-hidden="true"
+            className="size-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </AriaButton>
@@ -108,7 +116,10 @@ export function Combobox({
         </Text>
       ) : null}
       {error ? (
-        <Text className="mt-1 block text-sm font-medium text-danger" slot="errorMessage">
+        <Text
+          className="mt-1 block text-sm font-medium text-danger"
+          slot="errorMessage"
+        >
           {error}
         </Text>
       ) : null}

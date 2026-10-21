@@ -1,9 +1,10 @@
 "use client";
 
+import { OfflineBanner } from "@/components/ui/offline-banner";
 import type { Route } from "next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { I18nProvider, RouterProvider } from "react-aria-components";
 
 // Toasts only ever follow a user action, so the region loads after hydration instead of
@@ -26,12 +27,19 @@ const ToastRegion = dynamic(
  *   as "5.000 £", a hydration mismatch. en-GB only (design §10).
  * - `RouterProvider`: React Aria links navigate client-side through Next's router.
  * - The single toast region, lazily loaded.
+ * - The single offline banner (slice 3.9). Eager: it must work when the network does not.
  */
 export function Providers({ children }: { children: ReactNode }) {
   const router = useRouter();
+  // `<html data-hydrated>` once React owns the page. e2e waits for it before typing,
+  // because keys pressed into server-rendered markup before hydration are lost (3.9).
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "";
+  }, []);
   return (
     <I18nProvider locale="en-GB">
       <RouterProvider navigate={(href) => router.push(href as Route)}>
+        <OfflineBanner />
         {children}
         <ToastRegion />
       </RouterProvider>

@@ -67,3 +67,12 @@ export const test = base.extend<Fixtures>({
 });
 
 export { expect };
+
+/**
+ * Waits until React has hydrated the page (components/providers.tsx sets the marker).
+ * Use before typing or pressing keys: input before hydration goes to inert server markup.
+ */
+export async function gotoHydrated(page: Page, url: string): Promise<void> {
+  await page.goto(url);
+  await page.locator("html[data-hydrated]").waitFor({ state: "attached" });
+}

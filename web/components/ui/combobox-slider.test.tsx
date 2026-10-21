@@ -20,7 +20,14 @@ describe("Combobox (Feature 03 §2, §8)", () => {
   it("selects with the keyboard alone, matching without accents", async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
-    render(<Combobox id="make" items={MAKES} label="Make" onSelectionChange={onSelectionChange} />);
+    render(
+      <Combobox
+        id="make"
+        items={MAKES}
+        label="Make"
+        onSelectionChange={onSelectionChange}
+      />,
+    );
 
     const input = screen.getByRole("combobox", { name: "Make" });
     await user.tab();
@@ -28,7 +35,11 @@ describe("Combobox (Feature 03 §2, §8)", () => {
     await user.keyboard("citroen");
 
     const listbox = screen.getByRole("listbox");
-    expect(within(listbox).getAllByRole("option").map((option) => option.textContent)).toEqual(["Citroën"]);
+    expect(
+      within(listbox)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Citroën"]);
 
     await user.keyboard("{ArrowDown}{Enter}");
     expect(onSelectionChange).toHaveBeenLastCalledWith("citroen");
@@ -53,39 +64,73 @@ describe("Combobox (Feature 03 §2, §8)", () => {
     expect(document.getElementById(active ?? "")).toHaveTextContent("Citroën");
 
     await user.keyboard("{ArrowDown}");
-    expect(document.getElementById(input.getAttribute("aria-activedescendant") ?? "")).toHaveTextContent("Ford");
+    expect(
+      document.getElementById(
+        input.getAttribute("aria-activedescendant") ?? "",
+      ),
+    ).toHaveTextContent("Ford");
   });
 
   it("filters in the lookup normal form", async () => {
     const user = userEvent.setup();
     render(<Combobox id="make" items={MAKES} label="Make" />);
     await user.type(screen.getByRole("combobox"), "mercedes benz");
-    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["Mercedes-Benz"]);
+    expect(
+      screen.getAllByRole("option").map((option) => option.textContent),
+    ).toEqual(["Mercedes-Benz"]);
   });
 
   it("says when nothing matches, and says it is loading while items arrive", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
-      <Combobox emptyMessage="No makes match" id="make" items={MAKES} label="Make" />,
+      <Combobox
+        emptyMessage="No makes match"
+        id="make"
+        items={MAKES}
+        label="Make"
+      />,
     );
     await user.type(screen.getByRole("combobox"), "zzz");
     expect(screen.getByRole("status")).toHaveTextContent("No makes match");
 
-    rerender(<Combobox emptyMessage="No makes match" id="make" isLoading items={[]} label="Make" />);
+    rerender(
+      <Combobox
+        emptyMessage="No makes match"
+        id="make"
+        isLoading
+        items={[]}
+        label="Make"
+      />,
+    );
     expect(screen.getByRole("status")).toHaveTextContent("Loading…");
   });
 
   it("links its hint and error to the input", () => {
-    render(<Combobox error="Choose a make" hint="Start typing" id="make" items={MAKES} label="Make" />);
+    render(
+      <Combobox
+        error="Choose a make"
+        hint="Start typing"
+        id="make"
+        items={MAKES}
+        label="Make"
+      />,
+    );
     const input = screen.getByRole("combobox", { name: "Make" });
-    expect(input).toHaveAccessibleDescription(expect.stringContaining("Start typing"));
-    expect(input).toHaveAccessibleDescription(expect.stringContaining("Choose a make"));
+    expect(input).toHaveAccessibleDescription(
+      expect.stringContaining("Start typing"),
+    );
+    expect(input).toHaveAccessibleDescription(
+      expect.stringContaining("Choose a make"),
+    );
     expect(input).toHaveAttribute("aria-invalid", "true");
   });
 
   it("filters the full model list without noticeable lag", async () => {
     // Every model in the seed taxonomy (Feature 02), padded to 550 options.
-    const csv = readFileSync(path.resolve(process.cwd(), "../backend/data/taxonomy/models.csv"), "utf8");
+    const csv = readFileSync(
+      path.resolve(process.cwd(), "../backend/data/taxonomy/models.csv"),
+      "utf8",
+    );
     const models: ComboboxItem[] = csv
       .trim()
       .split("\n")
@@ -94,7 +139,11 @@ describe("Combobox (Feature 03 §2, §8)", () => {
         const [make, slug, name] = line.split(",");
         return { id: `${make}/${slug}`, name: name ?? "" };
       });
-    while (models.length < 550) models.push({ id: `pad-${models.length}`, name: `Model ${models.length}` });
+    while (models.length < 550)
+      models.push({
+        id: `pad-${models.length}`,
+        name: `Model ${models.length}`,
+      });
     expect(models.length).toBeGreaterThanOrEqual(550);
 
     render(<Combobox id="model" items={models} label="Model" />);
@@ -114,7 +163,9 @@ describe("Combobox (Feature 03 §2, §8)", () => {
   });
 });
 
-function PriceSlider(props: { onChangeEnd?: (value: [number, number]) => void }) {
+function PriceSlider(props: {
+  onChangeEnd?: (value: [number, number]) => void;
+}) {
   return (
     <RangeSlider
       defaultValue={[500_000, 2_000_000]}

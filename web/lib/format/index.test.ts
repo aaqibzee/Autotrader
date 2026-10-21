@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatCountdown,
+  formatWait,
   formatDate,
   formatMileage,
   formatPrice,
@@ -74,5 +76,36 @@ describe("formatRelativeTime", () => {
   it("describes future times and the present moment", () => {
     expect(formatRelativeTime("2026-10-14T14:00:00Z", now)).toBe("in 2 hours");
     expect(formatRelativeTime(now, now)).toBe("in 0 seconds");
+  });
+});
+
+describe("formatCountdown", () => {
+  it.each([
+    [0, "0:00"],
+    [5, "0:05"],
+    [59.2, "1:00"],
+    [65, "1:05"],
+    [720, "12:00"],
+  ])("%s s -> %s", (seconds, expected) => {
+    expect(formatCountdown(seconds)).toBe(expected);
+  });
+
+  it("refuses negative or non-finite input", () => {
+    expect(() => formatCountdown(-1)).toThrow(RangeError);
+    expect(() => formatCountdown(Number.NaN)).toThrow(RangeError);
+  });
+});
+
+describe("formatWait", () => {
+  it.each([
+    [0, "0 seconds"],
+    [1, "1 second"],
+    [0.4, "1 second"],
+    [45, "45 seconds"],
+    [60, "1 minute"],
+    [61, "2 minutes"],
+    [180, "3 minutes"],
+  ])("%s s -> %s", (seconds, expected) => {
+    expect(formatWait(seconds)).toBe(expected);
   });
 });

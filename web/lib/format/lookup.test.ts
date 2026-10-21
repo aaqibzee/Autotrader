@@ -8,7 +8,10 @@ import { matchesLookup, normaliseLookup } from "./lookup";
 const contract = JSON.parse(
   readFileSync(
     fileURLToPath(
-      new URL("../../../ops/contracts/lookup-normal-form.json", import.meta.url),
+      new URL(
+        "../../../ops/contracts/lookup-normal-form.json",
+        import.meta.url,
+      ),
     ),
     "utf8",
   ),

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CLIENT_TIMEOUT_MS, getClientApi, mutateClientApi } from "./client";
+import { isNetworkFailing, reportNetworkSuccess } from "./connectivity";
 import { ApiError, ApiNetworkError, ApiTimeoutError } from "./error";
 import { requestApi } from "./response";
 
@@ -31,6 +32,7 @@ function hang() {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  reportNetworkSuccess();
 });
 
 describe("client API boundary", () => {
@@ -225,5 +227,48 @@ describe("mutateClientApi", () => {
     ).rejects.toBeInstanceOf(ApiTimeoutError);
     await vi.advanceTimersByTimeAsync(CLIENT_TIMEOUT_MS);
     await outcome;
+  });
+});
+
+describe("the offline signal (Feature 03 slice 3.9)", () => {
+  it("a failed connection raises it, and any response clears it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(new TypeError("Failed to fetch"))),
+    );
+    await expect(requestApi("/api/v1/health/ready")).rejects.toBeInstanceOf(
+      ApiNetworkError,
+    );
+    expect(isNetworkFailing()).toBe(true);
+
+    // A 500 is still a response: the network is fine, the server is not.
+    vi.stubGlobal(
+      "fetch",
+      respond({ code: "internal_error" }, { status: 500 }),
+    );
+    await expect(requestApi("/api/v1/health/ready")).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(isNetworkFailing()).toBe(false);
+  });
+
+  it("neither a timeout nor the caller's abort counts as offline", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", hang());
+    const timedOut = expect(
+      requestApi("/api/v1/health/ready", { timeoutMs: 100 }),
+    ).rejects.toBeInstanceOf(ApiTimeoutError);
+    await vi.advanceTimersByTimeAsync(100);
+    await timedOut;
+
+    const controller = new AbortController();
+    const aborted = expect(
+      requestApi("/api/v1/health/ready", { signal: controller.signal }),
+    ).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    controller.abort();
+    await aborted;
+    expect(isNetworkFailing()).toBe(false);
   });
 });
