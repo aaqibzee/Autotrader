@@ -49,6 +49,10 @@ type OverlayProps = {
   footer?: (close: () => void) => ReactNode;
   /** `false` for dialogs that must not be dismissed by a stray tap (unsaved work). */
   isDismissable?: boolean;
+  /** Controlled open state, for dialogs opened by something other than a trigger
+   * (e.g. the conflict dialog after a 409). Without these, `DialogTrigger` owns it. */
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
   className?: string;
 };
 
@@ -106,6 +110,8 @@ export function Modal(props: OverlayProps) {
     <ModalOverlay
       className={cx(scrim, "flex items-center justify-center p-4")}
       isDismissable={props.isDismissable ?? true}
+      isOpen={props.isOpen}
+      onOpenChange={props.onOpenChange}
     >
       <AriaModal
         className={cx(

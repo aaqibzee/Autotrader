@@ -35,6 +35,7 @@ describe("/dev/components (Feature 03 A3)", () => {
       "combobox",
       "range-slider",
       "states",
+      "form-probe",
       "offline",
     ];
     for (const id of sections) {

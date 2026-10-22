@@ -4,7 +4,18 @@
   "plugins": ["typescript", "react", "nextjs", "import"],
   "rules": {
     "no-debugger": "error",
-    "no-unused-vars": "error"
+    "no-unused-vars": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "zod",
+            "message": "Import z from @/lib/forms/zod: it disables zod's eval probe, which our CSP reports as a violation (Feature 03 slice 3.10)."
+          }
+        ]
+      }
+    ]
   },
   "overrides": [
     {
@@ -24,6 +35,10 @@
                 "name": "@playwright/test",
                 "importNames": ["test", "expect"],
                 "message": "Import test/expect from ./fixtures: it fails tests on CSP violations (Feature 03 slice 3.2)."
+              },
+              {
+                "name": "zod",
+                "message": "Import z from @/lib/forms/zod."
               }
             ]
           }
@@ -32,6 +47,12 @@
     },
     {
       "files": ["e2e/fixtures.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["lib/forms/zod.ts"],
       "rules": {
         "no-restricted-imports": "off"
       }

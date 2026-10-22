@@ -35,6 +35,14 @@ export default defineConfig({
           branches: 100,
           statements: 100,
         },
+        // Feature 03 slice 3.10: double submits, idempotent retries and conflicts are
+        // silent data bugs when they go wrong, so every branch is exercised.
+        "lib/forms/**": {
+          lines: 100,
+          functions: 100,
+          branches: 100,
+          statements: 100,
+        },
         // Feature 03 §1: the contrast maths decides what ships, so it is fully covered.
         "styles/contrast.ts": {
           lines: 100,

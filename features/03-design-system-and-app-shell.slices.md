@@ -22,7 +22,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.7 | React Aria foundation: Modal/Sheet, Toast, Tabs, Accordion | 2 h | 3.6 | Done (2026-10-21, branch `feature3`) |
 | 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Done (2026-10-21, branch `feature3`) |
 | 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Done (2026-10-21, branch `feature3`) |
-| 3.10 | `useApiForm`, `ConflictDialog`, form-probe endpoint | 2.5 h | 3.5, 3.7, 3.9 | Not started |
+| 3.10 | `useApiForm`, `ConflictDialog`, form-probe endpoint | 2.5 h | 3.5, 3.7, 3.9 | Built (2026-10-22, branch `feature3`); Done once CI e2e is green |
 | 3.11 | Layouts and the public shell | 2 h | 3.4, 3.7, 3.9 | Not started |
 | 3.12 | `ListingCard`, image placeholder, save-heart island | 1.5 h | 3.6, 3.11 | Not started |
 | 3.13 | Branded error pages, `Gone`, maintenance page export | 1.5 h | 3.9, 3.11 | Not started |
@@ -147,6 +147,20 @@ rendered on Linux. Each of these is a guard the design assumed was already there
    pages by a tenth of the range instead of a fixed step count. The hooks (`useSlider`,
    `useSliderThumb`, `useSliderState`) take a formatter object and a state we can adjust,
    so both hold, still with React Aria's keyboard and screen-reader behaviour.
+- **A18.** **An `Idempotency-Key` is reused only for an identical, unanswered request**
+   (found in 3.10). The plan said "renewed only after a success or a field change
+   following a 4xx". But the API stores and replays every answer below 500. Reusing a key
+   after a 429 would replay the 429 forever, and "Re-apply mine" sends a new `updated_at`,
+   so the same key would get `idempotency_key_reused`. Rule
+   (`lib/forms/idempotency-key.ts`): the key minted at mount is used for the first
+   attempt; it is reused only when the previous attempt got no answer (network error or
+   timeout) and the payload is identical; any answer spends it.
+- **A19.** **zod runs `jitless`, imported only through `lib/forms/zod.ts`** (found in
+   3.10). zod 4 probes `new Function` to decide whether to compile parsers. Under our CSP
+   the browser blocks it and reports a violation on every page with a schema. `jitless`
+   skips the probe; an oxlint `no-restricted-imports` rule makes the wrapper the only
+   way in. Cost: the gallery grew 225.8 → 288.6 kB. A public-page form (Feature 09's lead
+   form) must check the budget and may need `zod/mini` or server-only validation.
 
 ---
 
@@ -850,6 +864,65 @@ conflict handling for free.
 - Backend: the probe route is absent when `ENVIRONMENT=production` (test the app factory
   with production settings), so it can never ship.
 - Unit: key lifecycle rules; 100% coverage of `lib/forms/**`.
+
+**Notes (built 2026-10-22, branch `feature3`; Redis-backed tests run only in CI)**
+- **Backend probe** (`app/api/v1/endpoints/dev.py`, dev router, `ENVIRONMENT=local`
+  only):
+  - `GET /dev/form-probe/{id}` seeds and returns a record held in Redis per probe id, so
+    parallel tests never share one.
+  - `POST /dev/form-probe/{id}`:
+    - validates the body (422 `errors[]` as `body.<field>`);
+    - name "Taken" gives a server-side 422 that includes `body.dealer_id`, a field the
+      form does not have;
+    - checks `updated_at` through the real `ensure_not_stale` (409 with `current`);
+    - `mode` can ask for a 503 `integration_unavailable`, a 429 with `Retry-After: 3`,
+      or a 15 s hang;
+    - counts how often it really ran, per `Idempotency-Key`.
+  - `POST …/touch` plays "someone else saved". `GET …/executions` returns the counts.
+  - It runs behind the real `IdempotencyMiddleware`.
+  - Tests in `tests/test_dev_routes.py`: absent in staging and production, save/stale
+    and re-apply, touch, schema 422, unknown-field 422, 503/429, hang (with
+    `HANG_SECONDS` patched to 0), one execution per key with a replay header, and id
+    validation.
+- **e2e had no route from the browser to the API.** Deployed environments have nginx in
+  front of `/api/`; Playwright and `next dev` do not. `app/api/v1/[...path]/route.ts` →
+  `lib/api/dev-proxy.ts` forwards the API client's headers and answers, but only with
+  `DEV_API_PROXY=1` at runtime (set in `playwright.config.ts`); otherwise it is a 404
+  without calling out. Tests in `lib/api/dev-proxy.test.ts`.
+- **Web:**
+  - `lib/forms/` holds four pure modules (key lifecycle per A18, `apiFieldErrors` /
+    `schemaFieldErrors`, `conflictChanges`, `IDEMPOTENT_ENDPOINTS`) and the
+    `useApiForm` hook.
+  - The submit lock is a ref; failures keep the values.
+  - A 422 goes onto fields; unknown fields become `formErrors`.
+  - A 409 with `current` becomes `conflict`: `reloadTheirs`, or `reapplyMine`, which
+    resubmits on `tokenField`.
+  - Anything else becomes `problem`, for `ProblemView`.
+  - `useApiForm` sends a key only when given an `IDEMPOTENT_ENDPOINTS` name.
+  - zod 4.6.5 is pinned (4.6.6 was under two weeks old).
+- `ConflictDialog` is a non-dismissable `Modal` (now with controlled `isOpen` and
+  `onOpenChange`). It shows a Field / Yours / Theirs table built from the labelled
+  fields, with "Reload theirs" and "Re-apply mine".
+- Gallery: `#form-probe` drives every path. Open it with `?probe=<id>` to pick the record.
+- Tests: 24 unit tests in `lib/forms`, held to a new 100% gate in `vitest.config.mts`.
+  - The double submit is two `handleSubmit` calls in one `act` → one request.
+  - Network-error and timeout retries reuse the key; 422, 409 and success spend it.
+  - Re-apply carries their token; the default key is a UUID; and more.
+  - Probes: always reusing the key fails 5 tests; spending it on a network error fails 2.
+- e2e `form-probe.spec.ts` (real API):
+  - a double-click → one POST and one execution;
+  - a response lost at the network level (`route.fetch()` then `abort`) → retry sends
+    the same key and the probe runs once;
+  - 422 on the field plus the form-level alert;
+  - 409 dialog → "Re-apply mine" saves;
+  - the 429 countdown;
+  - 503 "continue manually";
+  - a hang shows the timeout state after ≥ 9.5 s.
+- **Local status:** 20 of 28 e2e pass. The 7 probe specs and `foundation.spec.ts` fail
+  locally only because Docker's Redis accepts connections but never answers. The probe
+  section showed the API's own 500 with its request id, which proves the proxy path
+  works. CI runs them for real; 3.10 is Done once that run is green.
+- Bundle: `/` is 114.0 kB. The gallery is 288.6 kB (zod non-JIT; see A19).
 
 ---
 

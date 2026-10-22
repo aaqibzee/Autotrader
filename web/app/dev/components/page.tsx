@@ -21,6 +21,7 @@ import {
   PermissionDenied,
 } from "@/components/ui/states";
 import { PROBLEM_UI } from "@/lib/api/problem-ui";
+import { FormProbe } from "./form-probe";
 import { galleryEnabled } from "@/lib/dev/gallery";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -382,6 +383,14 @@ export default function ComponentGalleryPage() {
         </div>
       </Section>
 
+      <Section id="form-probe" title="Form probe">
+        <p className="mb-4 text-ink-soft">
+          A real form against the dev-only API route: validation, double-submit
+          protection, idempotent retries, conflicts, 429, 503 and a hang.
+        </p>
+        <FormProbe />
+      </Section>
+
       <Section id="offline" title="Offline banner">
         <p className="mb-4 text-ink-soft">
           Shown at the top of every page. Go offline in the browser, or simulate
@@ -412,6 +421,7 @@ const SECTIONS = [
   ["combobox", "Combobox"],
   ["range-slider", "Range slider"],
   ["states", "States"],
+  ["form-probe", "Form probe"],
   ["offline", "Offline banner"],
 ] as const;
 

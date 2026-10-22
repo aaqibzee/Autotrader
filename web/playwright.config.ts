@@ -51,6 +51,8 @@ export default defineConfig({
         NEXT_TELEMETRY_DISABLED: "1",
         // Dev-only routes (/dev/*) are on for e2e only (A3).
         ENABLE_COMPONENT_GALLERY: "1",
+        // No nginx here: the browser's /api/v1 calls go through Next to the API (3.10).
+        DEV_API_PROXY: "1",
       },
     },
   ],
