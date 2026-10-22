@@ -1,9 +1,9 @@
 // Placeholder until Feature 14; it exists so the private-route rules have a route to test.
 export default function AdminPage() {
   return (
-    <main className="shell py-16">
+    <div className="shell py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
       <p className="mt-3 text-ink-muted">Coming in Feature 14.</p>
-    </main>
+    </div>
   );
 }

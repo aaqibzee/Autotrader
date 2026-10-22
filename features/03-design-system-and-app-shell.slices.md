@@ -23,7 +23,7 @@ rendered on Linux. Each of these is a guard the design assumed was already there
 | 3.8 | Combobox and RangeSlider | 2 h | 3.7 | Done (2026-10-21, branch `feature3`) |
 | 3.9 | States, offline banner, `Retry-After` countdown | 1.5 h | 3.5, 3.6 | Done (2026-10-21, branch `feature3`) |
 | 3.10 | `useApiForm`, `ConflictDialog`, form-probe endpoint | 2.5 h | 3.5, 3.7, 3.9 | Built (2026-10-22, branch `feature3`); Done once CI e2e is green |
-| 3.11 | Layouts and the public shell | 2 h | 3.4, 3.7, 3.9 | Not started |
+| 3.11 | Layouts and the public shell | 2 h | 3.4, 3.7, 3.9 | Done (2026-10-22, branch `feature3`) |
 | 3.12 | `ListingCard`, image placeholder, save-heart island | 1.5 h | 3.6, 3.11 | Not started |
 | 3.13 | Branded error pages, `Gone`, maintenance page export | 1.5 h | 3.9, 3.11 | Not started |
 | 3.14 | Visual regression, axe, keyboard journey, Lighthouse, docs | 2 h | all | Not started |
@@ -952,6 +952,57 @@ conflict handling for free.
   the gallery.
 - Bottom nav visible below `lg`, side nav from `lg` (two viewports).
 - No `(public)` file imports the session client (3.4 check still green).
+
+**Notes (done 2026-10-22, branch `feature3`)**
+- `components/layout/` holds the chrome; the route layouts only compose it:
+  - `PublicChrome`, used by `(public)` and `/account`: skip link, sticky header and
+    footer. The header has the wordmark, a "Search cars" entry, "Value my car" behind
+    `showValuation` (default `false`), "For dealers" and the account slot. The footer
+    has legal links and a `makeLinks` slot.
+  - `DealerChrome`: a header with the dealer name, a banner for `pending`/`suspended`
+    `dealerStatus`, and `DealerNav`.
+  - `AdminChrome`.
+  - `PageSkeleton`, used by the root and per-segment `loading.tsx` files, so the chrome
+    stays while a page streams.
+  - Pages no longer render their own `<main>`; each chrome renders `<main id="main"
+    tabIndex={-1}>` as the skip-link target.
+- **Links to pages that do not exist yet** (`/search`, `/sign-in`, `/terms`,
+  `/dealer/stock`, …) are cast to `Route` in one list, `components/layout/routes.ts`,
+  each marked with its owning feature. Typed routes would reject them otherwise.
+- **Account island** (client): a fixed `h-11 w-28` box from SSR, with states
+  loading → signed-in or signed-out.
+  - `load` is optional. Until Feature 04 provides `GET /users/me`, there is no loader and
+    no request (A8).
+  - Every failure (401, 404, anything else) shows signed-out silently, and late answers
+    after unmount are ignored.
+  - The visible text is "Account"; the accessible name says who is signed in.
+- `DealerNav` is the only client part of the dealer chrome, for `aria-current`. It is a
+  side nav from `lg` and a fixed 4-column bottom bar below it; `<main>` gets `pb-20`
+  below `lg` to clear the bar.
+- **The toast region and offline banner stay in the root `Providers`,** mounted once
+  for every layout. Duplicating them per layout would mount them twice on nested routes.
+- Dev probes, behind the gallery flag: `/dev/shell` renders the public chrome with a
+  signed-in account that arrives after `?delay=` ms, from the route handler
+  `/dev/account-probe`.
+- Bundle: `/` is **115.0 kB** (+1.0 kB). `/dealer` is 115.4 kB (not gated).
+- Tests: 15 unit tests.
+  - Island: no loader means signed-out; the same box while loading and after; null,
+    401, 404 and 500 all show signed-out; late answers after unmount are ignored.
+  - Public chrome: skip link first, hidden valuation, legal links, slots.
+  - Dealer: `aria-current` in both navs; pending and suspended banners; no banner when
+    approved or absent.
+  - Admin chrome and the skeleton.
+- e2e `shell.spec.ts`:
+  - the island loads 1.5 s late with the same bounding box before and after, and
+    CLS < 0.01;
+  - `scrollWidth <= 320` at 320 px on `/`, `/dealer`, `/dev/components` and
+    `/dev/shell`;
+  - bottom nav at 375 px, side nav at 1280 px;
+  - Tab reaches the skip link first, and Enter focuses `main`.
+- Guard probe: an unreserved island box (no fixed size, nothing rendered while loading)
+  fails the CLS spec on the bounding-box check.
+- Local e2e: 27 of 27 shell, gallery, CSP and API-client specs pass. The form-probe and
+  foundation specs still need Redis/Docker (CI).
 
 ---
 

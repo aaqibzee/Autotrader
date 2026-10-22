@@ -1,16 +1,10 @@
+import { PageSkeleton } from "@/components/layout/page-skeleton";
+
+// Outside any chrome (a route group without its own loading.tsx). Feature 03 §4.
 export default function Loading() {
   return (
-    <main
-      aria-busy="true"
-      className="shell flex min-h-screen items-center justify-center"
-    >
-      <p
-        aria-live="polite"
-        className="font-mono text-sm text-ink-muted"
-        role="status"
-      >
-        Checking service readiness...
-      </p>
+    <main id="main">
+      <PageSkeleton />
     </main>
   );
 }

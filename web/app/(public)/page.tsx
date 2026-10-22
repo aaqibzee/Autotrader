@@ -1,7 +1,5 @@
 import { ApiError } from "@/lib/api/error";
 import { getPublicApi } from "@/lib/api/public";
-import { BRAND } from "@/lib/brand";
-import Link from "next/link";
 
 export default async function HomePage() {
   let ready = false;
@@ -17,21 +15,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="shell flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-line py-6">
-        <Link
-          aria-label={`${BRAND.name} home`}
-          className="text-lg font-black tracking-tight"
-          href="/"
-        >
-          {BRAND.wordmark}
-          <span className="text-brand">.</span>
-        </Link>
-        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted">
-          Platform foundation
-        </span>
-      </header>
-
+    <div className="shell flex flex-col">
       <section className="grid flex-1 content-center gap-12 py-16 md:grid-cols-[1.2fr_0.8fr] md:items-center">
         <div className="max-w-2xl">
           <p className="mb-5 font-mono text-xs uppercase tracking-[0.16em] text-ink-muted">
@@ -76,11 +60,6 @@ export default async function HomePage() {
           )}
         </aside>
       </section>
-
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-muted">
-        <span>Built for the UK market</span>
-        <span>Foundation · 01</span>
-      </footer>
-    </main>
+    </div>
   );
 }
